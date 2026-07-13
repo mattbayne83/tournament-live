@@ -1,8 +1,20 @@
+import { Route, Switch } from 'wouter'
+import Home from './pages/Home'
+import SetupWizard from './pages/setup/SetupWizard'
+import AdminDashboard from './pages/admin/AdminDashboard'
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <h1 className="p-8 text-2xl font-bold">Pickleball Tourney</h1>
-    </div>
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/setup" component={SetupWizard} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route>
+        <div className="grid min-h-screen place-items-center">
+          <p className="font-display text-3xl uppercase text-text-soft">Page not found</p>
+        </div>
+      </Route>
+    </Switch>
   )
 }
 

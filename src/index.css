@@ -1,5 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', sans-serif;
+  /* Stadium signage type: Anton for the jumbotron, Barlow for everything else */
+  --font-display: 'Anton', 'Arial Narrow', sans-serif;
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-cond: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+
+  /* Broadcast ink (board, dark surfaces) — tinted toward UW blue */
+  --color-ink: oklch(0.16 0.02 255);
+  --color-ink-2: oklch(0.21 0.025 255);
+  --color-ink-3: oklch(0.29 0.03 255);
+  --color-board-text: oklch(0.94 0.01 85);
+  --color-board-soft: oklch(0.66 0.03 255);
+
+  /* Production-truck light surfaces (admin, setup) — warm paper */
+  --color-paper: oklch(0.975 0.008 60);
+  --color-paper-2: oklch(0.94 0.012 60);
+  --color-line: oklch(0.86 0.015 60);
+  --color-text: oklch(0.24 0.02 255);
+  --color-text-soft: oklch(0.47 0.025 255);
+
+  /* United Way warmth */
+  --color-flame: oklch(0.70 0.19 45);
+  --color-flame-deep: oklch(0.60 0.21 30);
+  --color-flame-tint: oklch(0.92 0.045 50);
+  --color-gold: oklch(0.82 0.13 85);
+  --color-uw: oklch(0.45 0.10 250);
+  --color-uw-soft: oklch(0.62 0.07 250);
+  --color-court: oklch(0.60 0.13 150);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    background: var(--color-paper);
+  }
+
+  ::selection {
+    background: var(--color-flame);
+    color: var(--color-ink);
+  }
+}
+
+/* Scores, standings, countdowns: digits must not wiggle */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

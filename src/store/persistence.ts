@@ -96,12 +96,15 @@ export function createPersistence(
   }
 }
 
-export function exportTournament(t: Tournament): string {
-  return JSON.stringify(t, null, 2)
+/** Backup file includes the admin key — it's the organizer's own disaster recovery. */
+export function exportBackup(t: Tournament, adminKey: string | null): string {
+  return JSON.stringify({ pbtBackup: 1, adminKey, tournament: t }, null, 2)
 }
 
-export function importTournament(json: string): Tournament {
-  const t = migrate(JSON.parse(json))
-  if (!t) throw new Error('not a recognizable tournament file')
-  return t
+export function importBackup(json: string): { tournament: Tournament; adminKey: string | null } {
+  const raw = JSON.parse(json) as { pbtBackup?: number; adminKey?: string | null; tournament?: unknown }
+  const candidate = raw?.pbtBackup === 1 ? raw.tournament : raw
+  const tournament = migrate(candidate)
+  if (!tournament) throw new Error('not a recognizable tournament file')
+  return { tournament, adminKey: raw?.pbtBackup === 1 ? (raw.adminKey ?? null) : null }
 }
