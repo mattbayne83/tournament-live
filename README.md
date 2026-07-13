@@ -1,4 +1,4 @@
-# Pickleball Tourney
+# Tournament Manager
 
 Tournament day manager built for the United Way ONEOK charity pickleball tournament (Oct 7, 2026) — and reusable for any event after it.
 

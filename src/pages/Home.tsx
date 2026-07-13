@@ -24,11 +24,11 @@ export default function Home() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6 py-16">
-      <p className="font-cond font-semibold uppercase tracking-[0.3em] text-flame-deep">Tournament day manager</p>
+      <p className="font-cond font-semibold uppercase tracking-[0.3em] text-flame-deep">Tournament day HQ</p>
       <h1 className="mt-2 font-display text-6xl uppercase leading-none text-text sm:text-7xl">
-        Pickleball
+        Tournament
         <br />
-        Tourney
+        Manager
       </h1>
 
       <div className="mt-12 space-y-4">
