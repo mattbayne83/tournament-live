@@ -1,32 +1,26 @@
-# React + TypeScript + Vite
+# Pickleball Tourney
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Tournament day manager built for the United Way ONEOK charity pickleball tournament (Oct 7, 2026) — and reusable for any event after it.
 
-Currently, two official plugins are available:
+One organizer runs the whole day from a single device. A laptop at center court drives the **TV Event Board**; players and spectators follow along on their phones via a QR code.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What it does
 
-## React Compiler
+- **Two formats per division**: up/down ladder (timed rounds, fair bye rotation, hybrid top-4 championship playoff) and round-robin pools → single-elimination playoff
+- **Courtside score entry**: big steppers, movement preview before every ladder round commits, one-tap undo
+- **TV Event Board**: broadcast-style scoreboard — jumbo round countdown with horn, court map, auto-cycling standings, bracket, champion celebration
+- **Live sharing**: publishes to Cloudflare KV; viewers poll a read-only mirror. The organizer device keeps working if the wifi dies
+- **Day-of realities**: team withdrawals, past-round score corrections (stats-only or full positional replay), court handoffs between divisions, capacity math in the setup wizard
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the Oxlint configuration
+React 19 · TypeScript · Vite · Tailwind 4 · Zustand · wouter · Vitest · Cloudflare Pages + Functions + KV
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev          # app only (no sync API)
+npm test             # engine + store suites
+npm run build && npx wrangler pages dev dist   # full stack locally
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+See `CLAUDE.md` for architecture and deploy notes.

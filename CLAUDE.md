@@ -19,9 +19,23 @@ React 19 · TypeScript strict · Vite 7 · Tailwind CSS 4 · Zustand 5 · wouter
 ## Commands
 
 - `npm run dev` / `npm run build`
-- `npm test` — Vitest (engine suites)
-- `npx tsc -b && npx eslint . --max-warnings 0` — required green before any phase is called done
+- `npm test` — Vitest (engine + store suites)
+- `npx tsc -b && npm run lint` — required green before any phase is called done (oxlint, not eslint — new Vite template default)
+- `npx wrangler pages dev dist` — full stack locally (Functions + simulated KV on :8788); `npm run dev` alone has no `/api`
+
+## Deploy (Cloudflare Pages)
+
+1. `npx wrangler kv namespace create TOURNAMENTS` → paste the id into `wrangler.toml`
+2. `npm run build && npx wrangler pages deploy`
+3. KV free tier is 1,000 writes/day; the publisher coalesces to ≥5s between writes (~300–500 writes per event). Consider Workers Paid before event day as insurance.
 
 ## Key files
 
-(fill in as the project grows)
+- `src/types/tournament.ts` — the whole domain model; one `Tournament` blob
+- `src/engine/ladder.ts` — pairing, bye rotation, movement, extraction, replay
+- `src/engine/{pools,bracket,standings,scheduler}.ts` — pool draw/schedule, single-elim, tiebreak chain, court queue
+- `src/store/store.ts` — `commit()` spine, undo, all domain actions
+- `src/store/{persistence,publisher}.ts` — localStorage autosave; coalescing KV publish loop
+- `functions/api/t/[id].ts` — GET/PUT sync endpoint (claim-on-first-write, rev 409, ETag)
+- `src/pages/board/` — TV Event Board (flagship); `src/pages/admin/` — organizer dashboard; `src/pages/live/` — mobile viewer
+- `.impeccable.md` — design context (broadcast scoreboard, Anton + Barlow, UW palette)
