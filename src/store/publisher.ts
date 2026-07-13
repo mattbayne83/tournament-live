@@ -13,6 +13,9 @@ export interface Publisher {
   kick: () => void
 }
 
+/** Set at app bootstrap so UI (sync pill) can poke the running publisher. */
+export const publisherRef: { current: Publisher | null } = { current: null }
+
 const MIN_INTERVAL_MS = 5_000
 const MAX_BACKOFF_MS = 60_000
 

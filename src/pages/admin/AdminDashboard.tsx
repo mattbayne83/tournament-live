@@ -1,6 +1,8 @@
 import { Download, Home, MonitorPlay, Undo2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { StandingsTable } from '../../components/StandingsTable'
+import { SyncPill } from '../../components/SyncPill'
 import { TimerBar } from '../../components/TimerBar'
 import { Button, Tag } from '../../components/ui'
 import { ladderStandings } from '../../engine/ladder'
@@ -20,6 +22,7 @@ export default function AdminDashboard() {
   const undo = useAppStore((s) => s.undo)
   const activeDivisionId = useAppStore((s) => s.ui.activeDivisionId)
   const setActiveDivision = useAppStore((s) => s.setActiveDivision)
+  const twoTabs = useSecondAdminTabGuard()
 
   if (!tournament) {
     navigate('/')
@@ -53,6 +56,7 @@ export default function AdminDashboard() {
         <h1 className="font-display text-3xl uppercase leading-none">{tournament.name}</h1>
         <Tag tone="flame">{tournament.status}</Tag>
         <div className="ml-auto flex items-center gap-2">
+          <SyncPill />
           <Button size="sm" variant="ghost" onClick={download} title="Download backup JSON">
             <Download size={16} /> Backup
           </Button>
@@ -66,6 +70,12 @@ export default function AdminDashboard() {
           </Link>
         </div>
       </header>
+
+      {twoTabs && (
+        <p className="mt-4 border-2 border-flame-deep bg-flame-tint px-4 py-3 font-semibold text-flame-deep">
+          Another admin tab is open. Scoring from two tabs will overwrite each other — close one.
+        </p>
+      )}
 
       <nav className="mt-6 flex flex-wrap gap-1 border-b-2 border-line">
         {tournament.divisions.map((div) => (
@@ -95,6 +105,25 @@ export default function AdminDashboard() {
       )}
     </div>
   )
+}
+
+/** Two admin tabs both publish full state — last write silently wins. Warn loudly. */
+function useSecondAdminTabGuard(): boolean {
+  const [twoTabs, setTwoTabs] = useState(false)
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return
+    const channel = new BroadcastChannel('pbt-admin')
+    channel.onmessage = (e) => {
+      if (e.data === 'admin-here') {
+        setTwoTabs(true)
+        channel.postMessage('admin-here-too')
+      }
+      if (e.data === 'admin-here-too') setTwoTabs(true)
+    }
+    channel.postMessage('admin-here')
+    return () => channel.close()
+  }, [])
+  return twoTabs
 }
 
 function LadderPanel({ tournament, division }: { tournament: Tournament; division: Division }) {

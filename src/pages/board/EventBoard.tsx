@@ -1,16 +1,30 @@
 import { Expand } from 'lucide-react'
 import { useEffect } from 'react'
-import { Link } from 'wouter'
-import { useTournamentSource } from '../../utils/useTournamentSource'
+import { Link, useParams } from 'wouter'
+import {
+  useLocalTournament,
+  useRemoteTournament,
+  type TournamentSource,
+} from '../../utils/useTournamentSource'
 import { CourtMap, DivisionPane, JumboCountdown } from './BoardPanes'
+
+/** `/board` — on the organizer laptop, straight from the local store. */
+export default function EventBoard() {
+  return <BoardView {...useLocalTournament()} />
+}
+
+/** `/t/:id/board` — same board anywhere, polling the public mirror. */
+export function RemoteBoard() {
+  const { id } = useParams<{ id: string }>()
+  return <BoardView {...useRemoteTournament(id)} />
+}
 
 /**
  * The TV Event Board — the most-seen surface of the event. Runs fullscreen on
  * a laptop driving the center-court TVs; every size is set for 1080p read
  * from the bleachers.
  */
-export default function EventBoard() {
-  const { tournament, offsetMs, source } = useTournamentSource()
+function BoardView({ tournament, offsetMs, source, updatedAgoSec, notFound }: TournamentSource) {
 
   useEffect(() => {
     let lock: { release: () => Promise<void> } | null = null
@@ -24,8 +38,16 @@ export default function EventBoard() {
   if (!tournament) {
     return (
       <div className="grid min-h-screen place-items-center bg-ink text-board-soft">
-        <p className="font-display text-3xl uppercase">
-          No tournament on this device — <Link href="/" className="text-flame underline">set one up</Link>
+        <p className="px-6 text-center font-display text-3xl uppercase">
+          {notFound ? (
+            'Tournament not found — check the link'
+          ) : source === 'remote' ? (
+            'Connecting…'
+          ) : (
+            <>
+              No tournament on this device — <Link href="/" className="text-flame underline">set one up</Link>
+            </>
+          )}
         </p>
       </div>
     )
@@ -45,15 +67,18 @@ export default function EventBoard() {
               Live
             </span>
           )}
-          {source === 'local' && (
-            <button
-              onClick={() => void document.documentElement.requestFullscreen?.().catch(() => {})}
-              aria-label="fullscreen"
-              className="p-2 text-board-soft hover:text-board-text"
-            >
-              <Expand size={22} />
-            </button>
+          {updatedAgoSec !== null && (
+            <span className="tabular font-cond text-sm uppercase tracking-wider text-board-soft">
+              updated {updatedAgoSec}s ago
+            </span>
           )}
+          <button
+            onClick={() => void document.documentElement.requestFullscreen?.().catch(() => {})}
+            aria-label="fullscreen"
+            className="p-2 text-board-soft hover:text-board-text"
+          >
+            <Expand size={22} />
+          </button>
         </div>
       </header>
 
