@@ -10,6 +10,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow 
 - Real-hardware rehearsal: laptop → TV board, phone score entry outdoors
 - Nice-to-haves: `endDivision` surfaced in the UI, third-place-match toggle in setup, board pane layout tuning after seeing the real TV
 
+## [0.2.0] — 2026-07-13
+
+Admin-side visibility and planning tools.
+
+### Added
+- **Day planner** (`/plan`, linked from Home): simulate a division before committing to a format — runs the real pairing engines with random results, so bye rotation and playoff structure behave like game day. Timeline bar with block-end marker and fits/over verdict, games-per-team min/avg/max, sitting per round, longest sit streak. Each wizard division deep-links into it pre-filled ("Simulate this division")
+- **Visual ladder** in admin: court boxes with team chips and ↑/↓/held/sat movement badges from the last round, plus the rotation queue with bye counts
+- **Results feed** in admin: collapsible round-by-round log of every finished game (court, score, winner) for ladder, pools, and playoff
+- **Bracket graphic** in the admin playoff panel — same BracketView as the TV board, replacing the text results list
+- **Board → admin navigation**: dashboard button in the TV board header (organizer laptop only)
+- **Sample teams** (testing): fill 8/16/24 pun-grade teams per division on the wizard Teams step
+- `src/engine/simulate.ts` with its own Vitest suites (63 tests total); `Stepper` supports step increments
+
 ## [0.1.0] — 2026-07-13
 
 Initial release, built plan-first for the United Way ONEOK pickleball tournament (Oct 7, 2026) and verified end-to-end with a scripted dress rehearsal (setup → two champions, remote viewers tracking, zero page errors).

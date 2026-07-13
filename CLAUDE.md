@@ -34,8 +34,9 @@ React 19 · TypeScript strict · Vite 7 · Tailwind CSS 4 · Zustand 5 · wouter
 - `src/types/tournament.ts` — the whole domain model; one `Tournament` blob
 - `src/engine/ladder.ts` — pairing, bye rotation, movement, extraction, replay
 - `src/engine/{pools,bracket,standings,scheduler}.ts` — pool draw/schedule, single-elim, tiebreak chain, court queue
+- `src/engine/simulate.ts` — day-planning simulator (timeline segments, games/team, sitting stats) over the real engines
 - `src/store/store.ts` — `commit()` spine, undo, all domain actions
 - `src/store/{persistence,publisher}.ts` — localStorage autosave; coalescing KV publish loop
 - `functions/api/t/[id].ts` — GET/PUT sync endpoint (claim-on-first-write, rev 409, ETag)
-- `src/pages/board/` — TV Event Board (flagship); `src/pages/admin/` — organizer dashboard; `src/pages/live/` — mobile viewer
+- `src/pages/board/` — TV Event Board (flagship); `src/pages/admin/` — organizer dashboard (incl. `LadderViz`, `ResultsFeed`, `PlayoffStrip`, `ManagePanel`); `src/pages/live/` — mobile viewer; `src/pages/plan/Planner.tsx` — day planner (`/plan`, query-param deep links from the wizard)
 - `.impeccable.md` — design context (broadcast scoreboard, Anton + Barlow, UW palette)

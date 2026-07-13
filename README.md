@@ -7,7 +7,8 @@ One organizer runs the whole day from a single device. A laptop at center court 
 ## What it does
 
 - **Two formats per division**: up/down ladder (timed rounds, fair bye rotation, hybrid top-4 championship playoff) and round-robin pools → single-elimination playoff
-- **Courtside score entry**: big steppers, movement preview before every ladder round commits, one-tap undo
+- **Day planner** (`/plan`): simulate a format before committing — timeline vs. the time block, games per team, sitting fairness, computed by the real pairing engines
+- **Courtside score entry**: big steppers, movement preview before every ladder round commits, one-tap undo, visual ladder with movement badges, round-by-round results log, live bracket graphic
 - **TV Event Board**: broadcast-style scoreboard — jumbo round countdown with horn, court map, auto-cycling standings, bracket, champion celebration
 - **Live sharing**: publishes to Cloudflare KV; viewers poll a read-only mirror. The organizer device keeps working if the wifi dies
 - **Day-of realities**: team withdrawals, past-round score corrections (stats-only or full positional replay), court handoffs between divisions, capacity math in the setup wizard
