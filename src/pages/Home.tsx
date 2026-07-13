@@ -1,4 +1,4 @@
-import { ArrowRight, Trophy, Upload } from 'lucide-react'
+import { ArrowRight, CalendarClock, Trophy, Upload } from 'lucide-react'
 import { useRef } from 'react'
 import { useLocation } from 'wouter'
 import { Button, Tag } from '../components/ui'
@@ -61,6 +61,9 @@ export default function Home() {
             }}
           >
             <Trophy size={20} /> New tournament
+          </Button>
+          <Button size="lg" variant="secondary" onClick={() => navigate('/plan')}>
+            <CalendarClock size={20} /> Day planner
           </Button>
           <Button size="lg" variant="secondary" onClick={() => fileRef.current?.click()}>
             <Upload size={20} /> Import backup

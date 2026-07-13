@@ -10,8 +10,10 @@ import { poolStandings } from '../../engine/pools'
 import { exportBackup } from '../../store/persistence'
 import { ladderPlayoffPlacement, useAppStore } from '../../store/store'
 import type { CourtId, Division, Tournament } from '../../types/tournament'
+import { LadderViz } from './LadderViz'
 import { ManagePanel } from './ManagePanel'
 import { PlayoffStrip } from './PlayoffStrip'
+import { ResultsFeed } from './ResultsFeed'
 import { RoundControls } from './RoundControls'
 import { CourtGrid, UpNextList } from './ScoreCards'
 
@@ -159,15 +161,6 @@ function LadderPanel({ tournament, division }: { tournament: Tournament; divisio
 
       {playingMatches.length > 0 && <CourtGrid matches={playingMatches} teams={tournament.teams} mode="draft" />}
 
-      {state.currentSitters.length > 0 && state.roundPhase === 'playing' && (
-        <p className="text-sm">
-          <span className="font-cond font-bold uppercase tracking-widest text-text-soft">Sitting this round · </span>
-          <span className="font-semibold">
-            {state.currentSitters.map((id) => tournament.teams[id]?.name).join(', ')}
-          </span>
-        </p>
-      )}
-
       {state.playoff?.bracket && (
         <PlayoffStrip bracket={state.playoff.bracket} matches={tournament.matches} teams={tournament.teams} />
       )}
@@ -176,7 +169,10 @@ function LadderPanel({ tournament, division }: { tournament: Tournament; divisio
         <ExtractPlayoffControl tournament={tournament} division={division} />
       )}
 
+      <LadderViz tournament={tournament} division={division} />
+
       <StandingsTable rows={standings} teams={tournament.teams} title="Ladder standings" />
+      <ResultsFeed tournament={tournament} division={division} />
       <ManagePanel tournament={tournament} division={division} />
     </div>
   )
@@ -303,6 +299,7 @@ function PoolsPanel({ tournament, division }: { tournament: Tournament; division
         ))}
       </div>
 
+      <ResultsFeed tournament={tournament} division={division} />
       <ManagePanel tournament={tournament} division={division} />
     </div>
   )

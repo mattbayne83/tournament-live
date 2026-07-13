@@ -4,11 +4,13 @@ import SetupWizard from './pages/setup/SetupWizard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import EventBoard, { RemoteBoard } from './pages/board/EventBoard'
 import LiveView from './pages/live/LiveView'
+import Planner from './pages/plan/Planner'
 
 function App() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/plan" component={Planner} />
       <Route path="/setup" component={SetupWizard} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/board" component={EventBoard} />

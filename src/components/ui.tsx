@@ -58,12 +58,14 @@ export function Stepper({
   onChange,
   min = 0,
   max = 99,
+  step = 1,
   format = (n: number) => String(n),
 }: {
   value: number
   onChange: (n: number) => void
   min?: number
   max?: number
+  step?: number
   format?: (n: number) => string
 }) {
   return (
@@ -73,7 +75,7 @@ export function Stepper({
         aria-label="decrease"
         className="grid w-11 place-items-center text-text-soft hover:bg-paper-2 hover:text-flame-deep disabled:opacity-30"
         disabled={value <= min}
-        onClick={() => onChange(Math.max(min, value - 1))}
+        onClick={() => onChange(Math.max(min, value - step))}
       >
         <Minus size={18} strokeWidth={3} />
       </button>
@@ -85,7 +87,7 @@ export function Stepper({
         aria-label="increase"
         className="grid w-11 place-items-center text-text-soft hover:bg-paper-2 hover:text-flame-deep disabled:opacity-30"
         disabled={value >= max}
-        onClick={() => onChange(Math.min(max, value + 1))}
+        onClick={() => onChange(Math.min(max, value + step))}
       >
         <Plus size={18} strokeWidth={3} />
       </button>

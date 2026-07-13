@@ -1,6 +1,6 @@
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CalendarClock, Copy, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useLocation } from 'wouter'
+import { Link, useLocation } from 'wouter'
 import { Button, Field, Input, Seg, Stepper, Tag, TextArea } from '../../components/ui'
 import { useAppStore } from '../../store/store'
 import { capacityNotes } from '../../utils/capacity'
@@ -260,6 +260,24 @@ function serializeTeams(t: Tournament, divisionId: string): string {
     .join('\n')
 }
 
+/** Testing helper: pun-grade sample teams so a full dry run is two clicks. */
+const SAMPLE_TEAMS = [
+  'Dink Dynasty', 'Net Gains', 'The Kitchen Rulers', 'Big Dill Energy', 'Drop Shot Divas', 'Dill With It',
+  'Rally Cats', 'Court Jesters', 'The Volley Llamas', 'Zero Zero Two', 'Paddle Battle', 'Lob City',
+  'Sweet Dinks', 'Holy Volley', 'Slice Slice Baby', 'No Dinking Way', "Dinkin' Donuts", 'The Baseliners',
+  'Kitchen Nightmares', 'Serve-ivors', 'Smash Bros', 'Pickle Rick’s', 'Chicken N Pickle', 'The Ernes',
+]
+const SAMPLE_PLAYERS = ['Alex', 'Sam', 'Jordan', 'Priya', 'Casey', 'Morgan', 'Riley', 'Devon', 'Jamie', 'Quinn', 'Taylor', 'Drew']
+
+function sampleTeamLines(count: number, offset = 0): string {
+  return Array.from({ length: count }, (_, i) => {
+    const name = SAMPLE_TEAMS[(i + offset) % SAMPLE_TEAMS.length] + (i + offset >= SAMPLE_TEAMS.length ? ` ${Math.floor((i + offset) / SAMPLE_TEAMS.length) + 1}` : '')
+    const p1 = SAMPLE_PLAYERS[(i * 2 + offset) % SAMPLE_PLAYERS.length]
+    const p2 = SAMPLE_PLAYERS[(i * 2 + 1 + offset) % SAMPLE_PLAYERS.length]
+    return `${name}, ${p1} ${String.fromCharCode(65 + (i % 26))}., ${p2} ${String.fromCharCode(66 + (i % 25))}.`
+  }).join('\n')
+}
+
 function TeamsStep({ tournament }: { tournament: Tournament }) {
   const setTeams = useAppStore((s) => s.setTeams)
   const [drafts, setDrafts] = useState<Record<string, string>>(() =>
@@ -272,15 +290,32 @@ function TeamsStep({ tournament }: { tournament: Tournament }) {
         title="Teams"
         blurb="Paste one team per line: “Team name, Player 1, Player 2”. A line with just two names becomes a team automatically."
       />
-      {tournament.divisions.map((div) => {
+      {tournament.divisions.map((div, divIndex) => {
         const parsed = parseTeams(drafts[div.id] ?? '')
+        const fillSamples = (count: number) => {
+          const text = sampleTeamLines(count, divIndex * 12)
+          setDrafts((d) => ({ ...d, [div.id]: text }))
+          setTeams(div.id, parseTeams(text))
+        }
         return (
           <section key={div.id} className="space-y-3">
-            <div className="flex items-baseline justify-between">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-display text-2xl uppercase">{div.name}</h3>
-              <span className="tabular font-cond font-semibold uppercase tracking-wider text-text-soft">
-                {parsed.length} team{parsed.length === 1 ? '' : 's'}
-              </span>
+              <div className="flex items-baseline gap-3">
+                <span className="font-cond text-xs font-semibold uppercase tracking-wider text-text-soft/70">testing:</span>
+                {[8, 16, 24].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => fillSamples(n)}
+                    className="font-cond text-sm font-bold uppercase tracking-wider text-uw hover:text-flame-deep"
+                  >
+                    fill {n}
+                  </button>
+                ))}
+                <span className="tabular font-cond font-semibold uppercase tracking-wider text-text-soft">
+                  {parsed.length} team{parsed.length === 1 ? '' : 's'}
+                </span>
+              </div>
             </div>
             <TextArea
               value={drafts[div.id] ?? ''}
@@ -357,10 +392,30 @@ function CourtsStep({ tournament }: { tournament: Tournament }) {
               </li>
             ))}
           </ul>
+          <Link
+            href={simulateHref(div, teamCount(div.id))}
+            className="inline-flex items-center gap-1.5 font-cond text-sm font-bold uppercase tracking-wider text-flame-deep hover:text-ink"
+          >
+            <CalendarClock size={15} /> Simulate this division in the day planner
+          </Link>
         </section>
       ))}
     </div>
   )
+}
+
+function simulateHref(div: Tournament['divisions'][number], teams: number): string {
+  const q = new URLSearchParams({ teams: String(Math.max(4, teams)), courts: String(Math.max(1, div.courtIds.length)) })
+  if (div.format.kind === 'ladder') {
+    q.set('format', 'ladder')
+    q.set('round', String(div.format.config.roundMinutes))
+    q.set('playoff', div.format.config.playoffTopN > 0 ? '1' : '0')
+  } else if (div.format.kind === 'pools') {
+    q.set('format', 'pools')
+    q.set('pool', String(div.format.config.poolSize))
+    q.set('playoffTeams', String(div.format.config.playoffTeamCount))
+  }
+  return `/plan?${q.toString()}`
 }
 
 // --- Step 5: Seeding ---

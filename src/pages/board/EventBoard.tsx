@@ -1,4 +1,4 @@
-import { Expand } from 'lucide-react'
+import { Expand, LayoutDashboard } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useParams } from 'wouter'
 import { QrCode } from '../../components/QrCode'
@@ -72,6 +72,16 @@ function BoardView({ tournament, offsetMs, source, updatedAgoSec, notFound }: To
             <span className="tabular font-cond text-sm uppercase tracking-wider text-board-soft">
               updated {updatedAgoSec}s ago
             </span>
+          )}
+          {source === 'local' && (
+            <Link
+              href="/admin"
+              aria-label="back to admin"
+              title="Back to admin"
+              className="p-2 text-board-soft hover:text-board-text"
+            >
+              <LayoutDashboard size={22} />
+            </Link>
           )}
           <button
             onClick={() => void document.documentElement.requestFullscreen?.().catch(() => {})}
