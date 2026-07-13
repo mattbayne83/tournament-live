@@ -1,6 +1,7 @@
 import { Expand } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useParams } from 'wouter'
+import { QrCode } from '../../components/QrCode'
 import {
   useLocalTournament,
   useRemoteTournament,
@@ -93,6 +94,14 @@ function BoardView({ tournament, offsetMs, source, updatedAgoSec, notFound }: To
           {tournament.divisions.map((d) => (
             <DivisionPane key={d.id} tournament={tournament} division={d} />
           ))}
+          <div className="mt-auto flex items-center justify-end gap-4">
+            <p className="text-right font-cond text-lg font-semibold uppercase leading-tight tracking-widest text-board-soft">
+              Follow along
+              <br />
+              on your phone
+            </p>
+            <QrCode value={`${location.origin}/t/${tournament.id}`} size={110} />
+          </div>
         </div>
       </main>
     </div>

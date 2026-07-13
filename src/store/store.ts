@@ -7,6 +7,7 @@ import {
   pairNextRound,
   pauseTimer,
   removeTeam,
+  replayLadder,
   resumeTimer,
   seedLadder,
   startTimer,
@@ -77,6 +78,13 @@ export interface AppStore {
   ladderStartRound: (divisionId: DivisionId, now?: number) => void
   ladderFinalizeRound: (divisionId: DivisionId, results: MatchResult[]) => void
   ladderExtractPlayoff: (divisionId: DivisionId, championshipCourt: CourtId) => void
+  /**
+   * Corrects a past ladder round. 'stats' fixes W/L/PF/PA but keeps positions
+   * as physically played (the default — people already stood where the old
+   * result put them); 'replay' recomputes positions from the corrected round
+   * forward and is only allowed before a playoff extraction.
+   */
+  correctLadderRound: (divisionId: DivisionId, roundIndex: number, results: MatchResult[], mode: 'stats' | 'replay') => void
   timerPause: (divisionId: DivisionId, now?: number) => void
   timerResume: (divisionId: DivisionId, now?: number) => void
 
@@ -423,6 +431,28 @@ export const useAppStore = create<AppStore>()((set, get) => {
         for (const m of matches) t.matches[m.id] = m
         div.format.state = { ...state, playoff: { ...state.playoff!, bracket } }
         autoAssign(t, div)
+      }),
+
+    correctLadderRound: (divisionId, roundIndex, results, mode) =>
+      withDivision(`Correct round ${roundIndex + 1}`, divisionId, (t, div) => {
+        if (div.format.kind !== 'ladder') throw new Error('not a ladder division')
+        const state = div.format.state
+        if (state.roundPhase !== 'idle') throw new Error('finish the current round first')
+        const target = state.history.find((r) => r.roundIndex === roundIndex)
+        if (!target) throw new Error(`no round ${roundIndex + 1} on record`)
+        if (mode === 'replay' && state.playoff) throw new Error('positions are locked once the playoff is extracted')
+
+        const records = state.history.map((r) => (r.roundIndex === roundIndex ? { ...r, results } : r))
+        for (const r of results) {
+          const m = t.matches[r.matchId]
+          if (m) t.matches[r.matchId] = { ...m, score: r.score, winner: r.winner }
+        }
+        const seed = state.history[0]?.orderBefore ?? state.order
+        const replayed = replayLadder(seed, div.format.config, records)
+        div.format.state =
+          mode === 'replay'
+            ? { ...replayed, timer: state.timer, playoff: state.playoff }
+            : { ...state, history: records, stats: replayed.stats }
       }),
 
     timerPause: (divisionId, now = Date.now()) =>

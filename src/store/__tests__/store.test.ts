@@ -258,3 +258,55 @@ describe('persistence', () => {
     vi.useRealTimers()
   })
 })
+
+describe('round correction', () => {
+  it('stats-only fixes the record but keeps positions as played', () => {
+    const divId = setupLadderDivision(8, [1, 2, 3, 4])
+    store.getState().goLive()
+    store.getState().ladderStartRound(divId)
+    store.getState().ladderFinalizeRound(divId, currentRoundResults(divId, 'a'))
+    const before = store.getState().tournament!.divisions[0]
+    if (before.format.kind !== 'ladder') throw new Error()
+    const orderBefore = before.format.state.order
+    const corrected = structuredClone(before.format.state.history[0].results)
+    corrected[0] = { ...corrected[0], winner: 'b', score: { a: 5, b: 11 } }
+
+    store.getState().correctLadderRound(divId, 0, corrected, 'stats')
+    const after = store.getState().tournament!.divisions[0]
+    if (after.format.kind !== 'ladder') throw new Error()
+    expect(after.format.state.order).toEqual(orderBefore)
+    expect(after.format.state.stats[corrected[0].b]).toMatchObject({ w: 1, l: 0 })
+    expect(after.format.state.stats[corrected[0].a]).toMatchObject({ w: 0, l: 1 })
+    const m = store.getState().tournament!.matches[corrected[0].matchId]
+    expect(m.winner).toBe('b')
+  })
+
+  it('replay mode recomputes positions from the corrected round', () => {
+    const divId = setupLadderDivision(8, [1, 2, 3, 4])
+    store.getState().goLive()
+    store.getState().ladderStartRound(divId)
+    store.getState().ladderFinalizeRound(divId, currentRoundResults(divId, 'a'))
+    const before = store.getState().tournament!.divisions[0]
+    if (before.format.kind !== 'ladder') throw new Error()
+    const corrected = structuredClone(before.format.state.history[0].results)
+    corrected[0] = { ...corrected[0], winner: 'b', score: { a: 5, b: 11 } }
+
+    store.getState().correctLadderRound(divId, 0, corrected, 'replay')
+    const after = store.getState().tournament!.divisions[0]
+    if (after.format.kind !== 'ladder') throw new Error()
+    expect(after.format.state.order[0]).toBe(corrected[0].b)
+  })
+
+  it('replay is refused after playoff extraction', () => {
+    const divId = setupLadderDivision(10, [1, 2, 3, 4])
+    store.getState().goLive()
+    store.getState().ladderStartRound(divId)
+    store.getState().ladderFinalizeRound(divId, currentRoundResults(divId, 'a'))
+    store.getState().ladderExtractPlayoff(divId, 1)
+    const div = store.getState().tournament!.divisions[0]
+    if (div.format.kind !== 'ladder') throw new Error()
+    const results = div.format.state.history[0].results
+    expect(() => store.getState().correctLadderRound(divId, 0, results, 'replay')).toThrow()
+    store.getState().correctLadderRound(divId, 0, results, 'stats') // still allowed
+  })
+})

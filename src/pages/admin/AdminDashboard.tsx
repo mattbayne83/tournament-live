@@ -9,7 +9,8 @@ import { ladderStandings } from '../../engine/ladder'
 import { poolStandings } from '../../engine/pools'
 import { exportBackup } from '../../store/persistence'
 import { ladderPlayoffPlacement, useAppStore } from '../../store/store'
-import type { Division, Tournament } from '../../types/tournament'
+import type { CourtId, Division, Tournament } from '../../types/tournament'
+import { ManagePanel } from './ManagePanel'
 import { PlayoffStrip } from './PlayoffStrip'
 import { RoundControls } from './RoundControls'
 import { CourtGrid, UpNextList } from './ScoreCards'
@@ -23,6 +24,16 @@ export default function AdminDashboard() {
   const activeDivisionId = useAppStore((s) => s.ui.activeDivisionId)
   const setActiveDivision = useAppStore((s) => s.setActiveDivision)
   const twoTabs = useSecondAdminTabGuard()
+
+  // The scoring device must not doze off courtside.
+  useEffect(() => {
+    let lock: { release: () => Promise<void> } | null = null
+    navigator.wakeLock
+      ?.request('screen')
+      .then((l) => (lock = l))
+      .catch(() => {})
+    return () => void lock?.release().catch(() => {})
+  }, [])
 
   if (!tournament) {
     navigate('/')
@@ -161,7 +172,76 @@ function LadderPanel({ tournament, division }: { tournament: Tournament; divisio
         <PlayoffStrip bracket={state.playoff.bracket} matches={tournament.matches} teams={tournament.teams} />
       )}
 
+      {state.roundPhase === 'idle' && !state.playoff && state.roundIndex >= 1 && (
+        <ExtractPlayoffControl tournament={tournament} division={division} />
+      )}
+
       <StandingsTable rows={standings} teams={tournament.teams} title="Ladder standings" />
+      <ManagePanel tournament={tournament} division={division} />
+    </div>
+  )
+}
+
+/** The hybrid finish: pull the top 4 onto a championship court while the ladder plays on. */
+function ExtractPlayoffControl({ tournament, division }: { tournament: Tournament; division: Division }) {
+  const ladderExtractPlayoff = useAppStore((s) => s.ladderExtractPlayoff)
+  const [open, setOpen] = useState(false)
+  const [court, setCourt] = useState<CourtId>(division.courtIds[0])
+  const [error, setError] = useState<string | null>(null)
+  if (division.format.kind !== 'ladder') return null
+  const topN = division.format.config.playoffTopN
+  const top = division.format.state.order.slice(0, topN)
+  if (division.format.state.order.length < topN + 2) return null
+
+  if (!open) {
+    return (
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        Send top {topN} to playoff…
+      </Button>
+    )
+  }
+  return (
+    <div className="space-y-3 border-2 border-ink bg-ink p-5 text-board-text">
+      <p className="font-cond font-semibold uppercase tracking-[0.25em] text-board-soft">Playoff extraction</p>
+      <p className="text-sm text-board-soft">
+        Semifinals: <span className="font-semibold text-board-text">{tournament.teams[top[0]]?.name}</span> vs{' '}
+        <span className="font-semibold text-board-text">{tournament.teams[top[3]]?.name}</span> ·{' '}
+        <span className="font-semibold text-board-text">{tournament.teams[top[1]]?.name}</span> vs{' '}
+        <span className="font-semibold text-board-text">{tournament.teams[top[2]]?.name}</span>. The rest of the ladder
+        keeps playing on the remaining courts.
+      </p>
+      <label className="flex items-center gap-3 font-cond text-sm font-bold uppercase tracking-wider text-board-soft">
+        Championship court
+        <select
+          value={court}
+          onChange={(e) => setCourt(Number(e.target.value))}
+          className="border-2 border-ink-3 bg-ink-2 px-2 py-1 font-display text-lg text-board-text"
+        >
+          {division.courtIds.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex gap-3">
+        <Button
+          onClick={() => {
+            setError(null)
+            try {
+              ladderExtractPlayoff(division.id, court)
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'could not extract playoff')
+            }
+          }}
+        >
+          Start the playoff
+        </Button>
+        <Button variant="ghost" className="text-board-soft hover:bg-ink-2 hover:text-board-text" onClick={() => setOpen(false)}>
+          Not yet
+        </Button>
+      </div>
+      {error && <p className="font-semibold text-flame">{error}</p>}
     </div>
   )
 }
@@ -222,6 +302,8 @@ function PoolsPanel({ tournament, division }: { tournament: Tournament; division
           />
         ))}
       </div>
+
+      <ManagePanel tournament={tournament} division={division} />
     </div>
   )
 }
