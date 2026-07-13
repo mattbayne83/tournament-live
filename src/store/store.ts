@@ -25,6 +25,13 @@ import type {
   Tournament,
 } from '../types/tournament'
 
+export interface ScoreDraft {
+  a: number
+  b: number
+  /** Explicit pick for whistle ties, where the score alone can't decide. */
+  winner?: 'a' | 'b'
+}
+
 export interface SyncState {
   status: 'idle' | 'publishing' | 'offline' | 'error'
   lastPublishedRev: number
@@ -46,7 +53,7 @@ export interface AppStore {
   sync: SyncState
   ui: {
     activeDivisionId: DivisionId | null
-    scoreDrafts: Record<MatchId, { a: number; b: number }>
+    scoreDrafts: Record<MatchId, ScoreDraft>
   }
 
   commit: (label: string, mutate: (t: Tournament) => void, opts?: { undoable?: boolean }) => void
@@ -81,7 +88,7 @@ export interface AppStore {
   endDivision: (divisionId: DivisionId) => void
 
   setActiveDivision: (divisionId: DivisionId | null) => void
-  setScoreDraft: (matchId: MatchId, draft: { a: number; b: number }) => void
+  setScoreDraft: (matchId: MatchId, draft: ScoreDraft) => void
   clearScoreDraft: (matchId: MatchId) => void
 }
 

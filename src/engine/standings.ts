@@ -84,6 +84,8 @@ export function computeStandings(teamIds: TeamId[], matches: Match[], seed: stri
 
   const resolve = (group: TeamId[]): TeamId[] => {
     if (group.length === 1) return group
+    // Nothing played yet — keep draw order rather than coin-flipping noise.
+    if (group.every((id) => recs[id].w + recs[id].l === 0)) return group
     if (group.length === 2) {
       const h2h = headToHead(group[0], group[1])
       if (h2h !== 0) return h2h > 0 ? group : [group[1], group[0]]

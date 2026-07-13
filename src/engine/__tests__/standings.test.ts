@@ -116,3 +116,11 @@ describe('computeStandings', () => {
     expect(rows[0].w).toBe(2)
   })
 })
+
+describe('pre-play standings', () => {
+  it('keeps draw order with no notes before any games', () => {
+    const rows = computeStandings(['A', 'B', 'C', 'D'], [], 's')
+    expect(rows.map((r) => r.teamId)).toEqual(['A', 'B', 'C', 'D'])
+    expect(rows.every((r) => r.note === undefined)).toBe(true)
+  })
+})
