@@ -2,7 +2,7 @@
 
 Tournament day manager, built for the United Way ONEOK charity pickleball tournament (Oct 7, 2026) and reusable for any event. One organizer runs the day from a single device; a laptop at center court drives the TV Event Board (the flagship view); spectators can follow on phones via a shared link.
 
-Full build spec: `~/.claude/plans/prancy-wishing-gem.md`.
+Full build spec: `~/.claude/plans/prancy-wishing-gem.md`. Release history and open work: `CHANGELOG.md` (deployment to CF Pages is still pending — see Unreleased).
 
 ## Stack
 
