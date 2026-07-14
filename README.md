@@ -31,7 +31,7 @@ npm run pages:dev    # full stack locally (Functions + simulated KV)
 
 | Target | What to do |
 |---|---|
-| **GitHub** | `git push -u origin main` (remote: `mattbayne83/tournament-manager`) |
+| **GitHub** | `git push -u origin main` → [mattbayne83/tournament-live](https://github.com/mattbayne83/tournament-live) |
 | **Cloudflare Pages** | `wrangler login` → create KV → put id in `wrangler.toml` → `npm run deploy` |
 
 Step-by-step (KV, Git connect, custom domain, event-day checklist): **[DEPLOY.md](./DEPLOY.md)**

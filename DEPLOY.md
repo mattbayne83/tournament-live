@@ -30,14 +30,15 @@ npm run pages:dev    # builds then serves on :8788
 
 ## 1. GitHub (you push)
 
-Repo is expected at: **https://github.com/mattbayne83/tournament-manager**
+Canonical repo: **https://github.com/mattbayne83/tournament-live**
 
-If the remote is not set yet:
+Local remote should be:
 
 ```bash
 cd /Users/mattbayne/Documents/SoftwareProjects/tournament-manager
-git remote add origin git@github.com:mattbayne83/tournament-manager.git
-# or: git remote set-url origin git@github.com:mattbayne83/tournament-manager.git
+git remote set-url origin git@github.com:mattbayne83/tournament-live.git
+# first time only if origin is missing:
+# git remote add origin git@github.com:mattbayne83/tournament-live.git
 ```
 
 Push when ready:
@@ -50,7 +51,7 @@ Suggested GitHub settings after first push:
 
 - **About** → description: “Courtside tournament day manager (ladder + pools) with TV board and live sync”
 - Optional: enable **Issues** for event-day bugs
-- Visibility: **Private** until you’re ready to share; public is fine either way (no secrets live in the repo)
+- Visibility: private or public is fine (no secrets live in the repo)
 
 ---
 
@@ -106,12 +107,12 @@ Wrangler will:
 2. Bundle `functions/` (the `/api/t/:id` sync endpoint)
 3. Bind `TOURNAMENTS` KV from `wrangler.toml`
 
-On first deploy it may ask to create a **Pages project** named `tournament-manager`. Accept the default.
+On first CLI deploy it may ask to create a **Pages project**. Prefer the name **`tournament-live`** so it matches the GitHub repo (or connect Git instead — see §5).
 
 You’ll get a URL like:
 
 ```text
-https://tournament-manager.<your-subdomain>.pages.dev
+https://tournament-live.<your-subdomain>.pages.dev
 ```
 
 Open it, load a demo tournament, go live, open the spectator link in a private window — scores should appear after the publisher’s ~5s coalesce.
@@ -123,7 +124,7 @@ Open it, load a demo tournament, go live, open the spectator link in a private w
 If you prefer dashboard builds instead of `npm run deploy`:
 
 1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
-2. Select `mattbayne83/tournament-manager`
+2. Select `mattbayne83/tournament-live`
 3. Build settings:
 
 | Field | Value |
