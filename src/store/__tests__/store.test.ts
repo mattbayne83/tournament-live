@@ -310,3 +310,57 @@ describe('round correction', () => {
     store.getState().correctLadderRound(divId, 0, results, 'stats') // still allowed
   })
 })
+
+describe('demo, end, and reset', () => {
+  it('loadDemoTournament builds a ready-to-go two-division setup with sample players', () => {
+    store.getState().loadDemoTournament()
+    const t = store.getState().tournament!
+    expect(t.status).toBe('setup')
+    expect(t.courtsTotal).toBe(8)
+    expect(t.divisions).toHaveLength(2)
+    expect(t.divisions[0].format.kind).toBe('ladder')
+    expect(t.divisions[1].format.kind).toBe('pools')
+    expect(Object.keys(t.teams)).toHaveLength(32)
+    const sample = Object.values(t.teams)[0]
+    expect(sample.players[0].length).toBeGreaterThan(0)
+    expect(sample.players[1].length).toBeGreaterThan(0)
+    expect(t.divisions[0].courtIds).toEqual([1, 2, 3, 4])
+    expect(t.divisions[1].courtIds).toEqual([5, 6, 7, 8])
+  })
+
+  it('endTournament marks the event and every division complete', () => {
+    const divId = setupLadderDivision(8, [1, 2, 3, 4])
+    store.getState().goLive()
+    store.getState().ladderStartRound(divId)
+    store.getState().endTournament()
+    const t = store.getState().tournament!
+    expect(t.status).toBe('complete')
+    expect(t.divisions.every((d) => d.status === 'complete')).toBe(true)
+  })
+
+  it('endTournament refuses setup events', () => {
+    store.getState().createTournament('Draft', 8)
+    expect(() => store.getState().endTournament()).toThrow(/not gone live/)
+  })
+
+  it('resetTournament clears progress, keeps teams, and returns to setup', () => {
+    const divId = setupLadderDivision(8, [1, 2, 3, 4])
+    store.getState().goLive()
+    store.getState().ladderStartRound(divId)
+    store.getState().ladderFinalizeRound(divId, currentRoundResults(divId, 'a'))
+    const beforeTeams = Object.keys(store.getState().tournament!.teams).length
+    const beforeRev = store.getState().tournament!.rev
+
+    store.getState().resetTournament()
+    const t = store.getState().tournament!
+    expect(t.status).toBe('setup')
+    expect(t.matches).toEqual({})
+    expect(Object.keys(t.teams)).toHaveLength(beforeTeams)
+    expect(t.rev).toBe(beforeRev + 1)
+    expect(t.divisions[0].status).toBe('setup')
+    if (t.divisions[0].format.kind !== 'ladder') throw new Error()
+    expect(t.divisions[0].format.state.roundIndex).toBe(0)
+    expect(t.divisions[0].format.state.history).toEqual([])
+    expect(t.divisions[0].format.state.order).toHaveLength(8)
+  })
+})

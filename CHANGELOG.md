@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow 
 
 ## [Unreleased]
 
+### Added
+- **Load demo** (Home): one-click Competitive ladder + Recreational pools event with 32 pun-grade sample teams and split courts
+- **Test fill** buttons on setup Teams step (8 / 16 / 24) use shared sample roster utility with player names
+- **End tournament** and **Reset to setup** from Home and Admin, both behind a confirmation dialog (not a bare `window.confirm`)
+
 ### Planned
 - Deploy to Cloudflare Pages (create KV namespace, paste id into `wrangler.toml`, `wrangler pages deploy`)
 - Real-hardware rehearsal: laptop → TV board, phone score entry outdoors

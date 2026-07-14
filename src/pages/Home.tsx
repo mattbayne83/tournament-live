@@ -1,7 +1,7 @@
-import { ArrowRight, CalendarClock, Trophy, Upload } from 'lucide-react'
-import { useRef } from 'react'
+import { ArrowRight, CalendarClock, FlaskConical, RotateCcw, Trophy, Upload } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
-import { Button, Tag } from '../components/ui'
+import { Button, ConfirmDialog, Tag } from '../components/ui'
 import { importBackup } from '../store/persistence'
 import { useAppStore } from '../store/store'
 
@@ -9,8 +9,12 @@ export default function Home() {
   const [, navigate] = useLocation()
   const tournament = useAppStore((s) => s.tournament)
   const createTournament = useAppStore((s) => s.createTournament)
+  const loadDemoTournament = useAppStore((s) => s.loadDemoTournament)
   const loadTournament = useAppStore((s) => s.loadTournament)
+  const resetTournament = useAppStore((s) => s.resetTournament)
+  const endTournament = useAppStore((s) => s.endTournament)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [confirm, setConfirm] = useState<'demo' | 'reset' | 'end' | null>(null)
 
   const onImport = async (file: File) => {
     try {
@@ -20,6 +24,27 @@ export default function Home() {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Could not read that file')
     }
+  }
+
+  const runDemo = () => {
+    loadDemoTournament()
+    setConfirm(null)
+    navigate('/setup')
+  }
+
+  const runReset = () => {
+    resetTournament()
+    setConfirm(null)
+    navigate('/setup')
+  }
+
+  const runEnd = () => {
+    try {
+      endTournament()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not end tournament')
+    }
+    setConfirm(null)
   }
 
   return (
@@ -40,7 +65,9 @@ export default function Home() {
             <span>
               <span className="flex items-center gap-3">
                 <span className="font-display text-2xl uppercase text-board-text">{tournament.name}</span>
-                <Tag tone={tournament.status === 'live' ? 'flame' : 'uw'}>{tournament.status}</Tag>
+                <Tag tone={tournament.status === 'live' ? 'flame' : tournament.status === 'complete' ? 'gold' : 'uw'}>
+                  {tournament.status}
+                </Tag>
               </span>
               <span className="mt-1 block text-sm text-board-soft">
                 {tournament.divisions.length} division{tournament.divisions.length === 1 ? '' : 's'} ·{' '}
@@ -55,17 +82,28 @@ export default function Home() {
           <Button
             size="lg"
             onClick={() => {
-              if (tournament && !confirm('Start a new tournament? The current one stays saved on this device.')) return
+              if (tournament && !window.confirm('Start a new tournament? The current one stays saved on this device.'))
+                return
               createTournament('New Tournament', 8)
               navigate('/setup')
             }}
           >
             <Trophy size={20} /> New tournament
           </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            onClick={() => {
+              if (tournament) setConfirm('demo')
+              else runDemo()
+            }}
+          >
+            <FlaskConical size={20} /> Load demo
+          </Button>
           <Button size="lg" variant="secondary" onClick={() => navigate('/plan')}>
             <CalendarClock size={20} /> Day planner
           </Button>
-          <Button size="lg" variant="secondary" onClick={() => fileRef.current?.click()}>
+          <Button size="lg" variant="ghost" onClick={() => fileRef.current?.click()}>
             <Upload size={20} /> Import backup
           </Button>
           <input
@@ -80,12 +118,65 @@ export default function Home() {
             }}
           />
         </div>
+
+        {tournament && tournament.status !== 'setup' && (
+          <div className="flex flex-wrap gap-3 border-t-2 border-line pt-4">
+            {tournament.status === 'live' && (
+              <Button size="md" variant="secondary" onClick={() => setConfirm('end')}>
+                End tournament
+              </Button>
+            )}
+            <Button size="md" variant="ghost" onClick={() => setConfirm('reset')}>
+              <RotateCcw size={16} /> Reset to setup
+            </Button>
+          </div>
+        )}
       </div>
 
       <p className="mt-16 max-w-md text-sm leading-relaxed text-text-soft">
         Run ladder or pool-play tournaments from one device — live TV board, court assignments, round countdowns, and
-        standings that update as you score.
+        standings that update as you score. Use <span className="font-semibold text-text">Load demo</span> for a
+        one-click test event with sample teams.
       </p>
+
+      <ConfirmDialog
+        open={confirm === 'demo'}
+        title="Replace current tournament?"
+        body="Loading the demo creates a new Competitive ladder + Recreational pools event with sample teams. Your current tournament stays in this browser’s storage under its own id, but this session will switch to the demo."
+        confirmLabel="Load demo"
+        danger
+        onConfirm={runDemo}
+        onCancel={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        open={confirm === 'reset'}
+        title="Reset tournament to setup?"
+        body={
+          <>
+            This clears all scores, matches, standings progress, and playoff state for{' '}
+            <strong className="text-text">{tournament?.name}</strong>. Teams, division settings, and court assignments
+            stay. You’ll need to Go live again.
+          </>
+        }
+        confirmLabel="Reset tournament"
+        danger
+        onConfirm={runReset}
+        onCancel={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        open={confirm === 'end'}
+        title="End this tournament?"
+        body={
+          <>
+            Marks <strong className="text-text">{tournament?.name}</strong> and every division as complete. Scoring stops;
+            the TV board can show final results. You can still Reset to setup afterward if this was a dry run.
+          </>
+        }
+        confirmLabel="End tournament"
+        danger
+        onConfirm={runEnd}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

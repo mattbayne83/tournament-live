@@ -4,6 +4,7 @@ import { Link, useLocation } from 'wouter'
 import { Button, Field, Input, Seg, Stepper, Tag, TextArea } from '../../components/ui'
 import { useAppStore } from '../../store/store'
 import { capacityNotes } from '../../utils/capacity'
+import { sampleTeamLines } from '../../utils/sampleTeams'
 import type { Tournament } from '../../types/tournament'
 
 const STEPS = ['Event', 'Divisions', 'Teams', 'Courts', 'Seeding', 'Review'] as const
@@ -260,24 +261,6 @@ function serializeTeams(t: Tournament, divisionId: string): string {
     .join('\n')
 }
 
-/** Testing helper: pun-grade sample teams so a full dry run is two clicks. */
-const SAMPLE_TEAMS = [
-  'Dink Dynasty', 'Net Gains', 'The Kitchen Rulers', 'Big Dill Energy', 'Drop Shot Divas', 'Dill With It',
-  'Rally Cats', 'Court Jesters', 'The Volley Llamas', 'Zero Zero Two', 'Paddle Battle', 'Lob City',
-  'Sweet Dinks', 'Holy Volley', 'Slice Slice Baby', 'No Dinking Way', "Dinkin' Donuts", 'The Baseliners',
-  'Kitchen Nightmares', 'Serve-ivors', 'Smash Bros', 'Pickle Rick’s', 'Chicken N Pickle', 'The Ernes',
-]
-const SAMPLE_PLAYERS = ['Alex', 'Sam', 'Jordan', 'Priya', 'Casey', 'Morgan', 'Riley', 'Devon', 'Jamie', 'Quinn', 'Taylor', 'Drew']
-
-function sampleTeamLines(count: number, offset = 0): string {
-  return Array.from({ length: count }, (_, i) => {
-    const name = SAMPLE_TEAMS[(i + offset) % SAMPLE_TEAMS.length] + (i + offset >= SAMPLE_TEAMS.length ? ` ${Math.floor((i + offset) / SAMPLE_TEAMS.length) + 1}` : '')
-    const p1 = SAMPLE_PLAYERS[(i * 2 + offset) % SAMPLE_PLAYERS.length]
-    const p2 = SAMPLE_PLAYERS[(i * 2 + 1 + offset) % SAMPLE_PLAYERS.length]
-    return `${name}, ${p1} ${String.fromCharCode(65 + (i % 26))}., ${p2} ${String.fromCharCode(66 + (i % 25))}.`
-  }).join('\n')
-}
-
 function TeamsStep({ tournament }: { tournament: Tournament }) {
   const setTeams = useAppStore((s) => s.setTeams)
   const [drafts, setDrafts] = useState<Record<string, string>>(() =>
@@ -288,7 +271,7 @@ function TeamsStep({ tournament }: { tournament: Tournament }) {
     <div className="space-y-8">
       <StepTitle
         title="Teams"
-        blurb="Paste one team per line: “Team name, Player 1, Player 2”. A line with just two names becomes a team automatically."
+        blurb="Paste one team per line: “Team name, Player 1, Player 2”. A line with just two names becomes a team automatically. Use Fill to drop in pun-grade sample teams for a dry run."
       />
       {tournament.divisions.map((div, divIndex) => {
         const parsed = parseTeams(drafts[div.id] ?? '')
@@ -299,20 +282,18 @@ function TeamsStep({ tournament }: { tournament: Tournament }) {
         }
         return (
           <section key={div.id} className="space-y-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="font-display text-2xl uppercase">{div.name}</h3>
-              <div className="flex items-baseline gap-3">
-                <span className="font-cond text-xs font-semibold uppercase tracking-wider text-text-soft/70">testing:</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-cond text-xs font-semibold uppercase tracking-wider text-text-soft">
+                  Test fill
+                </span>
                 {[8, 16, 24].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => fillSamples(n)}
-                    className="font-cond text-sm font-bold uppercase tracking-wider text-uw hover:text-flame-deep"
-                  >
-                    fill {n}
-                  </button>
+                  <Button key={n} size="sm" variant="secondary" type="button" onClick={() => fillSamples(n)}>
+                    {n} teams
+                  </Button>
                 ))}
-                <span className="tabular font-cond font-semibold uppercase tracking-wider text-text-soft">
+                <span className="tabular font-cond text-sm font-semibold uppercase tracking-wider text-text-soft">
                   {parsed.length} team{parsed.length === 1 ? '' : 's'}
                 </span>
               </div>

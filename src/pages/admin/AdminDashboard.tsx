@@ -1,10 +1,10 @@
-import { Download, Home, MonitorPlay, Undo2 } from 'lucide-react'
+import { Download, Home, MonitorPlay, RotateCcw, Undo2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { StandingsTable } from '../../components/StandingsTable'
 import { SyncPill } from '../../components/SyncPill'
 import { TimerBar } from '../../components/TimerBar'
-import { Button, Tag } from '../../components/ui'
+import { Button, ConfirmDialog, Tag } from '../../components/ui'
 import { ladderStandings } from '../../engine/ladder'
 import { poolStandings } from '../../engine/pools'
 import { exportBackup } from '../../store/persistence'
@@ -23,9 +23,12 @@ export default function AdminDashboard() {
   const adminKey = useAppStore((s) => s.adminKey)
   const past = useAppStore((s) => s.past)
   const undo = useAppStore((s) => s.undo)
+  const endTournament = useAppStore((s) => s.endTournament)
+  const resetTournament = useAppStore((s) => s.resetTournament)
   const activeDivisionId = useAppStore((s) => s.ui.activeDivisionId)
   const setActiveDivision = useAppStore((s) => s.setActiveDivision)
   const twoTabs = useSecondAdminTabGuard()
+  const [confirm, setConfirm] = useState<'end' | 'reset' | null>(null)
 
   // The scoring device must not doze off courtside.
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function AdminDashboard() {
         </Link>
         <h1 className="font-display text-3xl uppercase leading-none">{tournament.name}</h1>
         <Tag tone="flame">{tournament.status}</Tag>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <SyncPill />
           <Button size="sm" variant="ghost" onClick={download} title="Download backup JSON">
             <Download size={16} /> Backup
@@ -87,6 +90,12 @@ export default function AdminDashboard() {
       {twoTabs && (
         <p className="mt-4 border-2 border-flame-deep bg-flame-tint px-4 py-3 font-semibold text-flame-deep">
           Another admin tab is open. Scoring from two tabs will overwrite each other — close one.
+        </p>
+      )}
+
+      {tournament.status === 'complete' && (
+        <p className="mt-4 border-2 border-gold bg-gold/20 px-4 py-3 font-semibold text-ink">
+          Tournament complete. Scores are locked — use Reset to setup for another dry run.
         </p>
       )}
 
@@ -114,8 +123,56 @@ export default function AdminDashboard() {
           ) : (
             <PoolsPanel tournament={tournament} division={active} />
           )}
+
+          <section className="mt-8 flex flex-wrap gap-3 border-t-2 border-line pt-6">
+            {tournament.status === 'live' && (
+              <Button variant="secondary" onClick={() => setConfirm('end')}>
+                End tournament
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setConfirm('reset')}>
+              <RotateCcw size={16} /> Reset to setup
+            </Button>
+          </section>
         </main>
       )}
+
+      <ConfirmDialog
+        open={confirm === 'end'}
+        title="End this tournament?"
+        body={
+          <>
+            Marks <strong className="text-text">{tournament.name}</strong> and every division as complete. Use this when
+            the day is finished (or you want a clean stop mid dry-run). Scoring and round controls stop.
+          </>
+        }
+        confirmLabel="End tournament"
+        danger
+        onConfirm={() => {
+          endTournament()
+          setConfirm(null)
+        }}
+        onCancel={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        open={confirm === 'reset'}
+        title="Reset tournament to setup?"
+        body={
+          <>
+            Clears all scores, matches, timers, and playoff state for{' '}
+            <strong className="text-text">{tournament.name}</strong>. Teams, formats, and courts stay. You&apos;ll return
+            to the setup wizard and need to Go live again.
+          </>
+        }
+        confirmLabel="Reset tournament"
+        danger
+        onConfirm={() => {
+          resetTournament()
+          setConfirm(null)
+          navigate('/setup')
+        }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

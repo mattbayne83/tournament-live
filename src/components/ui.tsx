@@ -1,5 +1,6 @@
 import { Minus, Plus } from 'lucide-react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
+import { useEffect } from 'react'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type ButtonSize = 'sm' | 'md' | 'lg'
@@ -132,5 +133,66 @@ export function Tag({ children, tone = 'uw' }: { children: ReactNode; tone?: 'uw
     <span className={`inline-block px-2 py-0.5 font-cond text-xs font-bold uppercase tracking-widest ${tones[tone]}`}>
       {children}
     </span>
+  )
+}
+
+/** Blocking confirmation — prefer this over window.confirm for destructive actions. */
+export function ConfirmDialog({
+  open,
+  title,
+  body,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  danger = false,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean
+  title: string
+  body: ReactNode
+  confirmLabel?: string
+  cancelLabel?: string
+  danger?: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onCancel])
+
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4"
+      role="presentation"
+      onClick={onCancel}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        className="w-full max-w-md border-2 border-ink bg-paper p-6 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="confirm-dialog-title" className="font-display text-2xl uppercase text-text">
+          {title}
+        </h2>
+        <div className="mt-3 text-sm leading-relaxed text-text-soft">{body}</div>
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button type="button" variant={danger ? 'danger' : 'primary'} onClick={onConfirm} autoFocus>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }

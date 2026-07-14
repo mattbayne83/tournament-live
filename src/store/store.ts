@@ -25,6 +25,7 @@ import type {
   TeamId,
   Tournament,
 } from '../types/tournament'
+import { buildSampleTeams } from '../utils/sampleTeams'
 
 export interface ScoreDraft {
   a: number
@@ -62,8 +63,17 @@ export interface AppStore {
   redo: () => void
 
   createTournament: (name: string, courtsTotal: number) => void
+  /** Full dry-run setup: Competitive ladder + Rec pools, sample teams, courts split. */
+  loadDemoTournament: () => void
   loadTournament: (t: Tournament, adminKey: string | null) => void
   closeTournament: () => void
+  /** Mark the event finished — all divisions complete. */
+  endTournament: () => void
+  /**
+   * Wipe live progress and return to setup with the same teams, divisions,
+   * and courts (re-run from go-live without re-entering rosters).
+   */
+  resetTournament: () => void
 
   addDivision: (name: string, format: 'ladder' | 'pools') => DivisionId
   removeDivision: (divisionId: DivisionId) => void
@@ -253,6 +263,17 @@ export const useAppStore = create<AppStore>()((set, get) => {
       })
     },
 
+    loadDemoTournament: () => {
+      get().createTournament('Demo Tournament', 8)
+      const compId = get().addDivision('Competitive', 'ladder')
+      const recId = get().addDivision('Recreational', 'pools')
+      get().setTeams(compId, buildSampleTeams(16, 0))
+      get().setTeams(recId, buildSampleTeams(16, 12))
+      get().updateDivisionCourts(compId, [1, 2, 3, 4])
+      get().updateDivisionCourts(recId, [5, 6, 7, 8])
+      set((s) => ({ ui: { ...s.ui, activeDivisionId: compId } }))
+    },
+
     loadTournament: (t, adminKey) => {
       set({
         tournament: t,
@@ -272,6 +293,48 @@ export const useAppStore = create<AppStore>()((set, get) => {
         future: [],
         sync: { status: 'idle', lastPublishedRev: 0, publishCount: 0, dirty: false },
         ui: { activeDivisionId: null, scoreDrafts: {} },
+      })
+    },
+
+    endTournament: () => {
+      const { tournament } = get()
+      if (!tournament) throw new Error('no tournament loaded')
+      if (tournament.status === 'setup') throw new Error('tournament has not gone live')
+      commit('End tournament', (t) => {
+        t.status = 'complete'
+        for (const div of t.divisions) div.status = 'complete'
+      })
+    },
+
+    resetTournament: () => {
+      const { tournament } = get()
+      if (!tournament) throw new Error('no tournament loaded')
+      // Rebuild as a fresh setup snapshot of the same event (teams/courts/configs kept).
+      const next = structuredClone(tournament)
+      next.status = 'setup'
+      next.matches = {}
+      next.rev = tournament.rev + 1
+      next.updatedAt = new Date().toISOString()
+      for (const team of Object.values(next.teams)) team.status = 'active'
+      for (const div of next.divisions) {
+        div.status = 'setup'
+        const teamIds = Object.values(next.teams)
+          .filter((team) => team.divisionId === div.id)
+          .map((team) => team.id)
+        if (div.format.kind === 'ladder') {
+          div.format.state = seedLadder(teamIds, div.format.config)
+        } else if (div.format.kind === 'pools') {
+          div.format.state = { pools: [], phase: 'pool', playoff: null }
+        } else {
+          div.format.state = { size: 2, seedOrder: [], slots: [], championId: null }
+        }
+      }
+      set({
+        tournament: next,
+        past: [],
+        future: [],
+        sync: { ...get().sync, dirty: true },
+        ui: { activeDivisionId: next.divisions[0]?.id ?? null, scoreDrafts: {} },
       })
     },
 
