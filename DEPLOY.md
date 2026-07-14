@@ -17,11 +17,27 @@ This app is a static Vite SPA plus one Pages Function (`functions/api/t/[id].ts`
 | KV namespace `TOURNAMENTS` | **Created** — id `b4bd7e2dd1c14fc6bf46a627d231c305` in `wrangler.toml` |
 | SPA redirects | `public/_redirects` → `/* /index.html 200` |
 | Lockfile for CF `npm ci` | Fixed — pin `@emnapi/core` + `@emnapi/runtime` as devDeps so Linux clean-install works |
-| Cloudflare Pages Git project | **In progress** — build succeeds; deploy command must be Pages-specific (see §5) |
-| KV binding on Pages project | **Confirm** after first green deploy (Settings → Bindings → `TOURNAMENTS`) |
-| Production smoke-test (demo → live → private spectator) | **Pending** green deploy |
+| Cloudflare Pages project `tournament-live` | **LIVE** — created 2026-07-14 via CLI (Direct Upload), <https://tournament-live.pages.dev> |
+| KV binding on Pages project | **Working** — applied automatically from `wrangler.toml` on `pages deploy` |
+| Production API smoke-test (PUT → GET → 304 → 401) | **Passed** 2026-07-14 against production KV |
+| In-app smoke-test (demo → live → private spectator) | Pending — needs a browser walk-through |
+| Git-connected auto-deploy | **Not active** — project is Direct Upload; publish with `npm run deploy` (see note below) |
 | Custom domain | Not set |
 | Real-hardware TV/phone rehearsal | Not done |
+
+### How it's actually published (2026-07-14)
+
+The live site is a **Pages project** created via CLI (Direct Upload). Publish with:
+
+```bash
+npm run deploy    # build + npx wrangler pages deploy dist; applies KV binding from wrangler.toml
+```
+
+Pushing to GitHub does **not** auto-deploy. If Git auto-deploy is wanted later: delete the Direct Upload Pages project, then dashboard → **Create → Pages → Connect to Git** (not the default Workers flow) and re-add the KV binding.
+
+### Leftover Worker — safe to delete
+
+The dashboard also shows a **Worker** named `tournament-live` connected to `mattbayne83/tournament-live` with a failed build. That was the earlier dashboard "Connect to Git" attempt — the modern CF dashboard creates a **Worker with Git builds** by default, and this repo isn't a Worker, so its build always fails. It has no URLs, no bindings, and 0 invocations. It is inert but will re-run (and fail) on every push to `main`. Delete it in the dashboard (Worker → Settings → Delete) to stop the noise. Pages and Workers have separate namespaces, so the Pages project keeps the name.
 
 ### Not this app
 
