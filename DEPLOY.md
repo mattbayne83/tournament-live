@@ -17,27 +17,19 @@ This app is a static Vite SPA plus one Pages Function (`functions/api/t/[id].ts`
 | KV namespace `TOURNAMENTS` | **Created** — id `b4bd7e2dd1c14fc6bf46a627d231c305` in `wrangler.toml` |
 | SPA redirects | `public/_redirects` → `/* /index.html 200` |
 | Lockfile for CF `npm ci` | Fixed — pin `@emnapi/core` + `@emnapi/runtime` as devDeps so Linux clean-install works |
-| Cloudflare Pages project `tournament-live` | **LIVE** — created 2026-07-14 via CLI (Direct Upload), <https://tournament-live.pages.dev> |
-| KV binding on Pages project | **Working** — applied automatically from `wrangler.toml` on `pages deploy` |
-| Production API smoke-test (PUT → GET → 304 → 401) | **Passed** 2026-07-14 against production KV |
+| Cloudflare Pages project `tournament-live` | **To create as Git-connected** (dashboard wizard, see §5). CLI Direct Upload version was deleted 2026-07-14 to free the name |
+| Leftover failed Worker `tournament-live` | **Deleted** 2026-07-14 (was the dashboard Git-connect attempt — that wizard creates Workers by default) |
+| KV binding | `wrangler.toml` has `pages_build_output_dir` + `TOURNAMENTS`, so Git builds apply it automatically; verify under Settings → Bindings after first deploy |
+| Production API smoke-test (PUT → GET → 304 → 401) | **Passed** 2026-07-14 against production KV (during the CLI deploy); re-run after Git deploy |
 | In-app smoke-test (demo → live → private spectator) | Pending — needs a browser walk-through |
-| Git-connected auto-deploy | **Not active** — project is Direct Upload; publish with `npm run deploy` (see note below) |
 | Custom domain | Not set |
 | Real-hardware TV/phone rehearsal | Not done |
 
-### How it's actually published (2026-07-14)
+### Critical lesson: Pages wizard vs Workers wizard
 
-The live site is a **Pages project** created via CLI (Direct Upload). Publish with:
+The dashboard's default **"Connect to Git"** flow creates a **Worker with Git builds**, not a Pages project — that's what produced the always-failing `tournament-live` Worker on 2026-07-14 (deleted). The tell-tale: the Workers wizard asks for a **Deploy command**; the real Pages wizard never does — it asks for **Framework preset / Build command / Build output directory**. If a wizard asks for a deploy command, back out — wrong flow.
 
-```bash
-npm run deploy    # build + npx wrangler pages deploy dist; applies KV binding from wrangler.toml
-```
-
-Pushing to GitHub does **not** auto-deploy. If Git auto-deploy is wanted later: delete the Direct Upload Pages project, then dashboard → **Create → Pages → Connect to Git** (not the default Workers flow) and re-add the KV binding.
-
-### Leftover Worker — safe to delete
-
-The dashboard also shows a **Worker** named `tournament-live` connected to `mattbayne83/tournament-live` with a failed build. That was the earlier dashboard "Connect to Git" attempt — the modern CF dashboard creates a **Worker with Git builds** by default, and this repo isn't a Worker, so its build always fails. It has no URLs, no bindings, and 0 invocations. It is inert but will re-run (and fail) on every push to `main`. Delete it in the dashboard (Worker → Settings → Delete) to stop the noise. Pages and Workers have separate namespaces, so the Pages project keeps the name.
+Use: Workers & Pages → **Create** → switch to the **Pages** tab → **Connect to Git** (or Import an existing Git repository).
 
 ### Not this app
 
@@ -126,39 +118,29 @@ Uses project name from `wrangler.toml` (`tournament-live`). Prefer Git → CF fo
 
 ### Dashboard: create / connect
 
-1. [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages) → **Create** → **Pages** → **Connect to Git**
+1. [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages) → **Create** → switch to the **Pages** tab → **Connect to Git** / **Import an existing Git repository**
+   - **Sanity check you're in the Pages wizard:** it asks for a *Build output directory* and offers *Framework presets*. If it asks for a **Deploy command**, you're in the Workers wizard — back out (see "Critical lesson" above).
 2. Select **`mattbayne83/tournament-live`**
-3. Production branch: **`main`**
+3. Production branch: **`main`**, project name **`tournament-live`**
 
-### Build settings (exact field names in the UI)
+### Build settings (Pages wizard)
 
-Some CF UIs label the output folder **Path** instead of “Build output directory.”
-
-| Field | Value | Notes |
-|---|---|---|
-| **Build command** | `npm run build` | Runs `tsc -b && vite build` |
-| **Path** | `dist` | **Yes — `dist` goes here.** Vite output folder uploaded as the site |
-| **Deploy command** | `npx wrangler pages deploy dist` | Required in current UI; **must** be `pages deploy`, not plain `wrangler deploy` |
-| **Non-prod branch deploy command** | `npx wrangler pages deploy dist` | Same as production is fine |
-| Root directory (if separate) | *(empty)* | Repo root is the app |
-
-#### Wrong vs right deploy command
-
-| Command | Result |
+| Field | Value |
 |---|---|
-| `npx wrangler deploy` | **Fails** — Workers entrypoint expected; Pages project warning |
-| `npx wrangler pages deploy dist` | **Correct** for this repo |
+| Framework preset | **None** (or Vite if offered — both work) |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | *(empty — repo root is the app)* |
 
-If the UI forces a non-empty deploy command, always use the **pages** form.
+There is no deploy command in the Pages wizard — Pages uploads the output directory itself.
 
 ### After first green deploy
 
-1. **Settings → Bindings → KV namespace**
+1. Check **Settings → Bindings**: `wrangler.toml` has `pages_build_output_dir`, so the `TOURNAMENTS` KV binding should be picked up from the repo automatically. If it isn't listed, add it manually:
    - Variable name: **`TOURNAMENTS`** (exact)
-   - Namespace: the `TOURNAMENTS` namespace (`b4bd7e2…`)
-2. **Retry deployment** (or push) so the binding is live
-3. Open the project `*.pages.dev` URL
-4. Smoke-test: **Load demo** → setup → **Go live** → spectator link in a private window → score a match → update within ~5s
+   - Namespace: the `TOURNAMENTS` namespace (`b4bd7e2…`), then **Retry deployment**
+2. Open the project `*.pages.dev` URL
+3. Smoke-test: **Load demo** → setup → **Go live** → spectator link in a private window → score a match → update within ~5s
 
 ### What “green” looks like in logs
 
