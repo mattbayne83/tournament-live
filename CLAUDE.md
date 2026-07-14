@@ -2,11 +2,14 @@
 
 Tournament day manager, built for the United Way ONEOK charity pickleball tournament (Oct 7, 2026) and reusable for any event. One organizer runs the day from a single device; a laptop at center court drives the TV Event Board (the flagship view); spectators can follow on phones via a shared link.
 
-Full build spec: `~/.claude/plans/prancy-wishing-gem.md`. Release history and open work: `CHANGELOG.md` (deployment to CF Pages is still pending — see Unreleased).
+- **GitHub:** https://github.com/mattbayne83/tournament-live  
+- **Full build spec:** `~/.claude/plans/prancy-wishing-gem.md`  
+- **Release history / open work:** `CHANGELOG.md`  
+- **Deploy status & Cloudflare settings:** `DEPLOY.md` (source of truth for publish)
 
 ## Stack
 
-React 19 · TypeScript strict · Vite 7 · Tailwind CSS 4 · Zustand 5 · wouter · Lucide · Vitest. Deploys to Cloudflare Pages; live sync via Pages Functions + KV.
+React 19 · TypeScript strict · Vite · Tailwind CSS 4 · Zustand 5 · wouter · Lucide · Vitest · Cloudflare Pages + Functions + KV.
 
 ## Architecture
 
@@ -20,27 +23,35 @@ React 19 · TypeScript strict · Vite 7 · Tailwind CSS 4 · Zustand 5 · wouter
 
 - `npm run dev` / `npm run build`
 - `npm test` — Vitest (engine + store suites)
-- `npx tsc -b && npm run lint` — required green before any phase is called done (oxlint, not eslint — new Vite template default)
-- `npx wrangler pages dev dist` — full stack locally (Functions + simulated KV on :8788); `npm run dev` alone has no `/api`
+- `npx tsc -b && npm run lint` — required green before any phase is called done (oxlint, not eslint)
+- `npm run pages:dev` — full stack locally (Functions + simulated KV); `npm run dev` alone has no `/api`
+- `npm run deploy` — CLI Pages deploy (emergency); normal path is push to `main` on GitHub
 
 ## Deploy (Cloudflare Pages)
 
-Full walkthrough: `DEPLOY.md`. Short path:
+Primary path: **push to GitHub** → Cloudflare Pages Git build. Details and current status: **`DEPLOY.md`**.
 
-1. `wrangler login` then `npm run kv:create` → paste the id into `wrangler.toml`
-2. `npm run deploy` (build + `wrangler pages deploy dist`)
-3. KV free tier is 1,000 writes/day; the publisher coalesces to ≥5s between writes (~300–500 writes per event). Consider Workers Paid before event day as insurance.
+Short reference for the dashboard:
 
-SPA client routes need `public/_redirects` (`/* → /index.html 200`); Functions under `/api/*` still win.
+| Field | Value |
+|---|---|
+| Build command | `npm run build` |
+| Path (output dir) | `dist` |
+| Deploy command | `npx wrangler pages deploy dist` (**not** `wrangler deploy`) |
+| KV binding | `TOURNAMENTS` → id in `wrangler.toml` |
+
+KV production id is already set in `wrangler.toml`. SPA routes: `public/_redirects`. Lockfile includes `@emnapi/*` pins so CF Linux `npm ci` succeeds.
 
 ## Key files
 
 - `src/types/tournament.ts` — the whole domain model; one `Tournament` blob
 - `src/engine/ladder.ts` — pairing, bye rotation, movement, extraction, replay
 - `src/engine/{pools,bracket,standings,scheduler}.ts` — pool draw/schedule, single-elim, tiebreak chain, court queue
-- `src/engine/simulate.ts` — day-planning simulator (timeline segments, games/team, sitting stats) over the real engines
-- `src/store/store.ts` — `commit()` spine, undo, all domain actions
+- `src/engine/simulate.ts` — day-planning simulator over the real engines
+- `src/store/store.ts` — `commit()` spine, undo, domain actions (incl. demo / end / reset)
 - `src/store/{persistence,publisher}.ts` — localStorage autosave; coalescing KV publish loop
-- `functions/api/t/[id].ts` — GET/PUT sync endpoint (claim-on-first-write, rev 409, ETag)
-- `src/pages/board/` — TV Event Board (flagship); `src/pages/admin/` — organizer dashboard (incl. `LadderViz`, `ResultsFeed`, `PlayoffStrip`, `ManagePanel`); `src/pages/live/` — mobile viewer; `src/pages/plan/Planner.tsx` — day planner (`/plan`, query-param deep links from the wizard)
+- `src/utils/sampleTeams.ts` — pun sample rosters for dry runs
+- `functions/api/t/[id].ts` — GET/PUT sync endpoint
+- `src/pages/board/` — TV Event Board; `src/pages/admin/` — organizer dashboard; `src/pages/live/` — mobile viewer; `src/pages/plan/` — day planner
+- `DEPLOY.md` — publish status, CF settings, troubleshooting
 - `.impeccable.md` — design context (broadcast scoreboard, Anton + Barlow, UW palette)

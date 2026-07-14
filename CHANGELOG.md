@@ -9,9 +9,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow 
 - **Load demo** (Home): one-click Competitive ladder + Recreational pools event with 32 pun-grade sample teams and split courts
 - **Test fill** buttons on setup Teams step (8 / 16 / 24) use shared sample roster utility with player names
 - **End tournament** and **Reset to setup** from Home and Admin, both behind a confirmation dialog (not a bare `window.confirm`)
+- **Deploy docs** (`DEPLOY.md`): GitHub → Cloudflare Pages path, dashboard field map (Path = `dist`, deploy = `wrangler pages deploy dist`), KV id, lockfile/`npm ci` notes, status as of 2026-07-14
+- **SPA** `public/_redirects` for client routes on Pages
+- **Production KV** namespace id wired in `wrangler.toml` (`TOURNAMENTS`)
+- **Lockfile fix** for Cloudflare Linux `npm ci`: pin `@emnapi/core` + `@emnapi/runtime` as devDependencies
+
+### Deploy progress (2026-07-14)
+- GitHub: [mattbayne83/tournament-live](https://github.com/mattbayne83/tournament-live)
+- KV created; `wrangler.toml` name `tournament-live`
+- CF build (`npm run build`) succeeds after lockfile fix
+- Deploy command must be `npx wrangler pages deploy dist` (not `wrangler deploy`)
+- Remaining: green Pages deploy + bind `TOURNAMENTS` on the project + production smoke-test
 
 ### Planned
-- Deploy to Cloudflare Pages (create KV namespace, paste id into `wrangler.toml`, `wrangler pages deploy`)
+- Finish Cloudflare Pages green deploy + KV binding smoke-test
 - Real-hardware rehearsal: laptop → TV board, phone score entry outdoors
 - Nice-to-haves: `endDivision` surfaced in the UI, third-place-match toggle in setup, board pane layout tuning after seeing the real TV
 

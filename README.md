@@ -4,6 +4,8 @@ Tournament day manager built for the United Way ONEOK charity pickleball tournam
 
 One organizer runs the whole day from a single device. A laptop at center court drives the **TV Event Board**; players and spectators follow along on their phones via a QR code.
 
+**Repo:** [github.com/mattbayne83/tournament-live](https://github.com/mattbayne83/tournament-live)
+
 ## What it does
 
 - **Two formats per division**: up/down ladder (timed rounds, fair bye rotation, hybrid top-4 championship playoff) and round-robin pools → single-elimination playoff
@@ -27,19 +29,21 @@ npm test             # engine + store suites
 npm run pages:dev    # full stack locally (Functions + simulated KV)
 ```
 
-## Publish
+## Publish (GitHub → Cloudflare)
 
-| Target | What to do |
+Normal path: **push `main`** to GitHub; Cloudflare Pages builds and deploys.
+
+| Setting | Value |
 |---|---|
-| **GitHub** | `git push -u origin main` → [mattbayne83/tournament-live](https://github.com/mattbayne83/tournament-live) |
-| **Cloudflare Pages** | `wrangler login` → create KV → put id in `wrangler.toml` → `npm run deploy` |
+| Build command | `npm run build` |
+| Path (output) | `dist` |
+| Deploy command | `npx wrangler pages deploy dist` |
+| KV binding | `TOURNAMENTS` |
 
-Step-by-step (KV, Git connect, custom domain, event-day checklist): **[DEPLOY.md](./DEPLOY.md)**
+Full status, troubleshooting, and event-day checklist: **[DEPLOY.md](./DEPLOY.md)**  
+Architecture notes: **[CLAUDE.md](./CLAUDE.md)**
 
 ```bash
-wrangler login
-npm run kv:create          # paste the id into wrangler.toml
-npm run deploy             # build + upload Pages + Functions
+git push origin main
+# emergency CLI: npm run deploy
 ```
-
-See `CLAUDE.md` for architecture notes.

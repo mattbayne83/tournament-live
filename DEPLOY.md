@@ -2,16 +2,41 @@
 
 This app is a static Vite SPA plus one Pages Function (`functions/api/t/[id].ts`) that stores tournament blobs in **KV**. Live spectator sync only works after Cloudflare is configured.
 
+**Canonical GitHub repo:** [github.com/mattbayne83/tournament-live](https://github.com/mattbayne83/tournament-live)  
+**Local folder name:** `tournament-manager` (product name stays “Tournament Manager”; Pages/project name aligns with the repo: `tournament-live`)
+
+---
+
+## Status (as of 2026-07-14)
+
+| Item | State |
+|---|---|
+| App features (demo load, end/reset, planner, engines) | Done in repo |
+| GitHub repo `mattbayne83/tournament-live` | Connected; push `main` to publish |
+| `wrangler` login (local) | Working (`mattbayne@gmail.com`) |
+| KV namespace `TOURNAMENTS` | **Created** — id `b4bd7e2dd1c14fc6bf46a627d231c305` in `wrangler.toml` |
+| SPA redirects | `public/_redirects` → `/* /index.html 200` |
+| Lockfile for CF `npm ci` | Fixed — pin `@emnapi/core` + `@emnapi/runtime` as devDeps so Linux clean-install works |
+| Cloudflare Pages Git project | **In progress** — build succeeds; deploy command must be Pages-specific (see §5) |
+| KV binding on Pages project | **Confirm** after first green deploy (Settings → Bindings → `TOURNAMENTS`) |
+| Production smoke-test (demo → live → private spectator) | **Pending** green deploy |
+| Custom domain | Not set |
+| Real-hardware TV/phone rehearsal | Not done |
+
+### Not this app
+
+`https://tournament-manager.pages.dev` is a **different** project (“bert & erne”). This product should ship under the **tournament-live** Pages project URL (title **Tournament Manager**, Anton/Barlow fonts).
+
 ---
 
 ## 0. Prerequisites
 
 | Tool | Check |
 |---|---|
-| Node 20+ | `node -v` |
-| Wrangler | `wrangler --version` (or use `npx wrangler`) |
-| Cloudflare account | [dash.cloudflare.com](https://dash.cloudflare.com) — free plan is fine to start |
-| GitHub CLI (optional) | `gh auth status` |
+| Node 20+ (CF build uses 22) | `node -v` |
+| Wrangler | `wrangler --version` / `npx wrangler` |
+| Cloudflare account | [dash.cloudflare.com](https://dash.cloudflare.com) |
+| GitHub | remote → `mattbayne83/tournament-live` |
 
 Local app only (no live sync):
 
@@ -23,140 +48,151 @@ npm run dev          # http://localhost:5173
 Full stack locally (Functions + simulated KV):
 
 ```bash
-npm run pages:dev    # builds then serves on :8788
+npm run pages:dev    # builds then serves (often :8788)
 ```
 
 ---
 
-## 1. GitHub (you push)
-
-Canonical repo: **https://github.com/mattbayne83/tournament-live**
-
-Local remote should be:
+## 1. GitHub
 
 ```bash
 cd /Users/mattbayne/Documents/SoftwareProjects/tournament-manager
-git remote set-url origin git@github.com:mattbayne83/tournament-live.git
-# first time only if origin is missing:
-# git remote add origin git@github.com:mattbayne83/tournament-live.git
-```
-
-Push when ready:
-
-```bash
+git remote -v   # should be git@github.com:mattbayne83/tournament-live.git
 git push -u origin main
 ```
 
-Suggested GitHub settings after first push:
-
-- **About** → description: “Courtside tournament day manager (ladder + pools) with TV board and live sync”
-- Optional: enable **Issues** for event-day bugs
-- Visibility: private or public is fine (no secrets live in the repo)
+Day-to-day: **push to `main` → Cloudflare rebuilds** (once the Pages project is connected).
 
 ---
 
-## 2. Cloudflare login (one-time)
-
-In a terminal **on your machine** (opens a browser):
+## 2. Cloudflare login (one-time, local CLI)
 
 ```bash
 wrangler login
 wrangler whoami
 ```
 
-You should see your Cloudflare email/account. If `whoami` fails, re-run login.
-
 ---
 
-## 3. Create the KV namespace
+## 3. KV namespace (done once)
 
 ```bash
 npm run kv:create
-# same as: wrangler kv namespace create TOURNAMENTS
+# wrangler kv namespace create TOURNAMENTS
 ```
 
-Copy the **id** from the output (looks like `a1b2c3d4e5f6…`) and paste it into `wrangler.toml`:
+**Current production id** (already in `wrangler.toml`):
 
 ```toml
 [[kv_namespaces]]
 binding = "TOURNAMENTS"
-id = "PASTE_REAL_ID_HERE"
+id = "b4bd7e2dd1c14fc6bf46a627d231c305"
 ```
 
-Optional local preview namespace (only needed if you use `wrangler pages dev` with real remote KV):
-
-```bash
-wrangler kv namespace create TOURNAMENTS --preview
-# then set preview_id in wrangler.toml next to id
-```
-
-**Do not commit secrets.** The KV *namespace id* is not secret (it’s a resource id); the admin key is client-generated per tournament and never stored in git.
+- Namespace **id** is safe to commit (resource id, not a secret).
+- Admin keys are client-generated per tournament and never stored in git.
+- **Git-connected Pages still need a dashboard binding** with the exact name `TOURNAMENTS` (see §5). CLI deploys read `wrangler.toml`; dashboard deploys use **Settings → Bindings**.
 
 ---
 
-## 4. Deploy to Cloudflare Pages (CLI)
+## 4. Deploy via CLI (optional / emergency)
 
 ```bash
 npm run deploy
-# same as: npm run build && wrangler pages deploy dist
+# npm run build && wrangler pages deploy dist
 ```
 
-Wrangler will:
+Uses project name from `wrangler.toml` (`tournament-live`). Prefer Git → CF for normal work.
 
-1. Upload `dist/` (static SPA)
-2. Bundle `functions/` (the `/api/t/:id` sync endpoint)
-3. Bind `TOURNAMENTS` KV from `wrangler.toml`
+---
 
-On first CLI deploy it may ask to create a **Pages project**. Prefer the name **`tournament-live`** so it matches the GitHub repo (or connect Git instead — see §5).
+## 5. GitHub → Cloudflare Pages (primary path)
 
-You’ll get a URL like:
+### Dashboard: create / connect
+
+1. [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages) → **Create** → **Pages** → **Connect to Git**
+2. Select **`mattbayne83/tournament-live`**
+3. Production branch: **`main`**
+
+### Build settings (exact field names in the UI)
+
+Some CF UIs label the output folder **Path** instead of “Build output directory.”
+
+| Field | Value | Notes |
+|---|---|---|
+| **Build command** | `npm run build` | Runs `tsc -b && vite build` |
+| **Path** | `dist` | **Yes — `dist` goes here.** Vite output folder uploaded as the site |
+| **Deploy command** | `npx wrangler pages deploy dist` | Required in current UI; **must** be `pages deploy`, not plain `wrangler deploy` |
+| **Non-prod branch deploy command** | `npx wrangler pages deploy dist` | Same as production is fine |
+| Root directory (if separate) | *(empty)* | Repo root is the app |
+
+#### Wrong vs right deploy command
+
+| Command | Result |
+|---|---|
+| `npx wrangler deploy` | **Fails** — Workers entrypoint expected; Pages project warning |
+| `npx wrangler pages deploy dist` | **Correct** for this repo |
+
+If the UI forces a non-empty deploy command, always use the **pages** form.
+
+### After first green deploy
+
+1. **Settings → Bindings → KV namespace**
+   - Variable name: **`TOURNAMENTS`** (exact)
+   - Namespace: the `TOURNAMENTS` namespace (`b4bd7e2…`)
+2. **Retry deployment** (or push) so the binding is live
+3. Open the project `*.pages.dev` URL
+4. Smoke-test: **Load demo** → setup → **Go live** → spectator link in a private window → score a match → update within ~5s
+
+### What “green” looks like in logs
 
 ```text
-https://tournament-live.<your-subdomain>.pages.dev
+Installing project dependencies: npm clean-install ...
+added N packages ...
+> tournament-manager@0.2.0 build
+✓ built in ...
+npx wrangler pages deploy dist
+... Success / Deployed ...
 ```
 
-Open it, load a demo tournament, go live, open the spectator link in a private window — scores should appear after the publisher’s ~5s coalesce.
+---
+
+## 6. Lessons learned (2026-07-14 first deploy)
+
+### `npm ci` / lockfile (`Missing: @emnapi/core@…`)
+
+- Cloudflare runs **`npm clean-install` (`npm ci`)** on Linux.
+- Vite/Rolldown/Tailwind optional **wasm** peers need full lockfile entries for `@emnapi/core` and `@emnapi/runtime`.
+- Fix in repo: pin both as **devDependencies** and keep `package-lock.json` in sync.
+- After changing deps: run `npm install` / `npm ci` locally, commit **both** `package.json` and `package-lock.json`, then push.
+
+### Deploy command vs Path
+
+- **Path** = build **output** (`dist`), not the repo root.
+- **Deploy command** ≠ Path. Path tells CF which folder is the site; deploy command publishes it (when the UI requires one).
+
+### Do not confuse with other Pages projects
+
+- Other apps on the same CF account (e.g. an older `tournament-manager` / “bert & erne” site) are unrelated.
+- Confirm production by page title **Tournament Manager** and this repo’s UI.
 
 ---
 
-## 5. Optional: connect GitHub → Cloudflare (auto-deploy on push)
+## 7. Custom domain (optional)
 
-If you prefer dashboard builds instead of `npm run deploy`:
-
-1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
-2. Select `mattbayne83/tournament-live`
-3. Build settings:
-
-| Field | Value |
-|---|---|
-| Framework preset | Vite (or None) |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Root directory | `/` (default) |
-
-4. **Settings → Functions** — Pages auto-picks up the `functions/` directory from the repo.
-5. **Settings → Bindings → KV namespace** → add binding name `TOURNAMENTS` → select the namespace you created.
-6. Save and redeploy.
-
-**Note:** Dashboard KV bindings and `wrangler.toml` should point at the **same** namespace id. If you use both CLI deploys and Git deploys, keep them in sync.
+Pages project → **Custom domains** → add hostname. DNS on Cloudflare (or follow CNAME instructions).
 
 ---
 
-## 6. Custom domain (optional)
+## 8. Event-day checklist
 
-Cloudflare Dashboard → your Pages project → **Custom domains** → add e.g. `tourney.yourdomain.com`. DNS must be on Cloudflare (or follow their CNAME instructions).
-
----
-
-## 7. Event-day checklist
-
-- [ ] `wrangler whoami` still works on the laptop that deploys
-- [ ] KV namespace id is real (not `placeholder-create-me`)
-- [ ] Fresh `npm run deploy` after the last code change
-- [ ] Demo dry-run on the production URL (go live → second device polls `/t/:id`)
-- [ ] Download a JSON **Backup** from Admin before the real event
-- [ ] KV free tier = **1,000 writes/day**; publisher coalesces ≥5s (~300–500 writes per event). Consider **Workers Paid ($5/mo)** as insurance for Oct 7
-- [ ] Organizer laptop is source of truth if venue wifi dies; board on `/board` uses local store
+- [ ] Production URL opens **Tournament Manager** (this app)
+- [ ] KV binding `TOURNAMENTS` present on the Pages project
+- [ ] Demo dry-run: go live → second device polls `/t/:id` → scores update
+- [ ] Admin **Backup** JSON downloaded before the real event
+- [ ] Organizer laptop is source of truth if venue wifi dies (`/board` uses local store)
+- [ ] KV free tier = **1,000 writes/day**; publisher ≥5s between writes (~300–500/event). Consider **Workers Paid ($5/mo)** before Oct 7
+- [ ] Real-hardware: laptop → TV board, phone scoring outdoors
 
 ---
 
@@ -164,12 +200,14 @@ Cloudflare Dashboard → your Pages project → **Custom domains** → add e.g. 
 
 | Symptom | Fix |
 |---|---|
-| `/admin` 404 on refresh | Confirm `public/_redirects` is in the build (`dist/_redirects`) |
-| Spectator link stuck / 404 API | Function not deployed or KV binding missing — check Pages → Functions + Bindings |
-| PUT 401 wrong admin key | First writer claims the tournament id; use the same device/key or a new tournament id |
-| PUT 409 stale rev | Two admin tabs publishing — close one (app also warns) |
-| `wrangler` not logged in | `wrangler login` |
-| Build fails in CF Git | Node version: set env `NODE_VERSION=22` in Pages project settings if needed |
+| `npm ci` / Missing `@emnapi/…` | Regenerate lockfile; keep emnapi pins; commit lock + push |
+| `Missing entry-point to Worker script` | Deploy command is `wrangler deploy` → change to `npx wrangler pages deploy dist` |
+| Build OK, deploy fails interactively | Use non-interactive `pages deploy dist`; don’t use plain `deploy` |
+| `/admin` 404 on refresh | `public/_redirects` must ship in `dist/_redirects` |
+| Spectator never updates / API 404 | Function not live or **KV binding** missing/misnamed (`TOURNAMENTS`) |
+| PUT 401 wrong admin key | First writer claims the id; same device/key or new tournament |
+| PUT 409 stale rev | Two admin tabs — close one |
+| Site is wrong product | Wrong Pages project URL — use the one linked to `tournament-live` |
 
 ---
 
@@ -179,9 +217,9 @@ Cloudflare Dashboard → your Pages project → **Custom domains** → add e.g. 
 npm install
 npm test
 npm run build
-npm run pages:dev          # local full stack
+npm run pages:dev              # local full stack
 wrangler login
-npm run kv:create          # once
-# edit wrangler.toml with the KV id
-npm run deploy             # production
+npm run kv:create              # once (already done for prod id)
+npm run deploy                 # CLI emergency path
+git push origin main           # primary: triggers CF Git build
 ```
