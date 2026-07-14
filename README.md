@@ -4,6 +4,7 @@ Tournament day manager built for the United Way ONEOK charity pickleball tournam
 
 One organizer runs the whole day from a single device. A laptop at center court drives the **TV Event Board**; players and spectators follow along on their phones via a QR code.
 
+**Live:** [tournament-live.pages.dev](https://tournament-live.pages.dev)  
 **Repo:** [github.com/mattbayne83/tournament-live](https://github.com/mattbayne83/tournament-live)
 
 ## What it does
@@ -31,14 +32,15 @@ npm run pages:dev    # full stack locally (Functions + simulated KV)
 
 ## Publish (GitHub → Cloudflare)
 
-Normal path: **push `main`** to GitHub; Cloudflare Pages builds and deploys.
+Live at [tournament-live.pages.dev](https://tournament-live.pages.dev) — Git-connected: **push `main`** and Cloudflare Pages builds and deploys.
 
 | Setting | Value |
 |---|---|
 | Build command | `npm run build` |
-| Path (output) | `dist` |
-| Deploy command | `npx wrangler pages deploy dist` |
-| KV binding | `TOURNAMENTS` |
+| Build output directory | `dist` |
+| KV binding | `TOURNAMENTS` — applied automatically from `wrangler.toml` |
+
+If ever reconnecting, use the dashboard **Pages** wizard — the default "Connect to Git" flow creates a Worker, which always fails for this repo.
 
 Full status, troubleshooting, and event-day checklist: **[DEPLOY.md](./DEPLOY.md)**  
 Architecture notes: **[CLAUDE.md](./CLAUDE.md)**

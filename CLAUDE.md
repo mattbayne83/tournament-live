@@ -29,18 +29,15 @@ React 19 · TypeScript strict · Vite · Tailwind CSS 4 · Zustand 5 · wouter �
 
 ## Deploy (Cloudflare Pages)
 
-Primary path: **push to GitHub** → Cloudflare Pages Git build. Details and current status: **`DEPLOY.md`**.
-
-Short reference for the dashboard:
+**Live: https://tournament-live.pages.dev** — Git-connected Pages project; **push to `main`** deploys. Details and status: **`DEPLOY.md`**.
 
 | Field | Value |
 |---|---|
 | Build command | `npm run build` |
-| Path (output dir) | `dist` |
-| Deploy command | `npx wrangler pages deploy dist` (**not** `wrangler deploy`) |
-| KV binding | `TOURNAMENTS` → id in `wrangler.toml` |
+| Build output directory | `dist` |
+| KV binding | `TOURNAMENTS` — auto-applied from `wrangler.toml` (`pages_build_output_dir`) |
 
-KV production id is already set in `wrangler.toml`. SPA routes: `public/_redirects`. Lockfile includes `@emnapi/*` pins so CF Linux `npm ci` succeeds.
+Gotcha: the dashboard's default "Connect to Git" flow creates a **Worker** (its wizard asks for a Deploy command) — use Create → **Pages** tab instead. Emergency CLI: `npm run deploy`. SPA routes: `public/_redirects`. Lockfile includes `@emnapi/*` pins so CF Linux `npm ci` succeeds.
 
 ## Key files
 
