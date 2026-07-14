@@ -17,11 +17,11 @@ This app is a static Vite SPA plus one Pages Function (`functions/api/t/[id].ts`
 | KV namespace `TOURNAMENTS` | **Created** — id `b4bd7e2dd1c14fc6bf46a627d231c305` in `wrangler.toml` |
 | SPA redirects | `public/_redirects` → `/* /index.html 200` |
 | Lockfile for CF `npm ci` | Fixed — pin `@emnapi/core` + `@emnapi/runtime` as devDeps so Linux clean-install works |
-| Cloudflare Pages project `tournament-live` | **To create as Git-connected** (dashboard wizard, see §5). CLI Direct Upload version was deleted 2026-07-14 to free the name |
-| Leftover failed Worker `tournament-live` | **Deleted** 2026-07-14 (was the dashboard Git-connect attempt — that wizard creates Workers by default) |
-| KV binding | `wrangler.toml` has `pages_build_output_dir` + `TOURNAMENTS`, so Git builds apply it automatically; verify under Settings → Bindings after first deploy |
-| Production API smoke-test (PUT → GET → 304 → 401) | **Passed** 2026-07-14 against production KV (during the CLI deploy); re-run after Git deploy |
+| Cloudflare Pages project `tournament-live` | **LIVE, Git-connected** — <https://tournament-live.pages.dev>, push to `main` auto-deploys (created 2026-07-14 via dashboard Pages wizard) |
+| KV binding | **Working** — applied automatically from repo `wrangler.toml` (`pages_build_output_dir` + `TOURNAMENTS`) |
+| Production API smoke-test (404/PUT/GET/ETag-304/401) | **Passed** 2026-07-14 against the Git-connected deployment |
 | In-app smoke-test (demo → live → private spectator) | Pending — needs a browser walk-through |
+| Cleanup | Earlier failed Git-connected **Worker** and CLI **Direct Upload** Pages project (both named `tournament-live`) deleted 2026-07-14 |
 | Custom domain | Not set |
 | Real-hardware TV/phone rehearsal | Not done |
 
