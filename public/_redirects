@@ -1,0 +1,3 @@
+# SPA fallback — client routes (/admin, /board, /t/:id, /setup, /plan).
+# Pages Functions under /api/* take priority over this rule.
+/*    /index.html   200

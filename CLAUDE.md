@@ -25,9 +25,13 @@ React 19 · TypeScript strict · Vite 7 · Tailwind CSS 4 · Zustand 5 · wouter
 
 ## Deploy (Cloudflare Pages)
 
-1. `npx wrangler kv namespace create TOURNAMENTS` → paste the id into `wrangler.toml`
-2. `npm run build && npx wrangler pages deploy`
+Full walkthrough: `DEPLOY.md`. Short path:
+
+1. `wrangler login` then `npm run kv:create` → paste the id into `wrangler.toml`
+2. `npm run deploy` (build + `wrangler pages deploy dist`)
 3. KV free tier is 1,000 writes/day; the publisher coalesces to ≥5s between writes (~300–500 writes per event). Consider Workers Paid before event day as insurance.
+
+SPA client routes need `public/_redirects` (`/* → /index.html 200`); Functions under `/api/*` still win.
 
 ## Key files
 

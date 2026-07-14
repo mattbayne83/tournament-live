@@ -12,16 +12,34 @@ One organizer runs the whole day from a single device. A laptop at center court 
 - **TV Event Board**: broadcast-style scoreboard — jumbo round countdown with horn, court map, auto-cycling standings, bracket, champion celebration
 - **Live sharing**: publishes to Cloudflare KV; viewers poll a read-only mirror. The organizer device keeps working if the wifi dies
 - **Day-of realities**: team withdrawals, past-round score corrections (stats-only or full positional replay), court handoffs between divisions, capacity math in the setup wizard
+- **Dry-run helpers**: one-click **Load demo**, sample team fills, end/reset with confirmation dialogs
 
 ## Stack
 
 React 19 · TypeScript · Vite · Tailwind 4 · Zustand · wouter · Vitest · Cloudflare Pages + Functions + KV
 
+## Local development
+
 ```bash
 npm install
-npm run dev          # app only (no sync API)
+npm run dev          # app only (no sync API) → http://localhost:5173
 npm test             # engine + store suites
-npm run build && npx wrangler pages dev dist   # full stack locally
+npm run pages:dev    # full stack locally (Functions + simulated KV)
 ```
 
-See `CLAUDE.md` for architecture and deploy notes.
+## Publish
+
+| Target | What to do |
+|---|---|
+| **GitHub** | `git push -u origin main` (remote: `mattbayne83/tournament-manager`) |
+| **Cloudflare Pages** | `wrangler login` → create KV → put id in `wrangler.toml` → `npm run deploy` |
+
+Step-by-step (KV, Git connect, custom domain, event-day checklist): **[DEPLOY.md](./DEPLOY.md)**
+
+```bash
+wrangler login
+npm run kv:create          # paste the id into wrangler.toml
+npm run deploy             # build + upload Pages + Functions
+```
+
+See `CLAUDE.md` for architecture notes.
