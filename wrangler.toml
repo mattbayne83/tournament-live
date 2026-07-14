@@ -2,8 +2,8 @@ name = "tournament-live"
 compatibility_date = "2026-07-01"
 pages_build_output_dir = "dist"
 
-# Create the namespace with: npx wrangler kv namespace create TOURNAMENTS
-# then paste the real id below before the first deploy.
+# Production KV (created 2026-07-14). Dashboard Git deploys also need this
+# bound as TOURNAMENTS under Pages → Settings → Bindings.
 [[kv_namespaces]]
 binding = "TOURNAMENTS"
-id = "placeholder-create-me"
+id = "b4bd7e2dd1c14fc6bf46a627d231c305"
